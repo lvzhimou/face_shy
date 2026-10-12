@@ -55,6 +55,46 @@ info "清理旧的构建产物…"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
+# ---------------------------------------------------------------- 1.5 前置校验
+# 先验证 project.pbxproj 是否合法，再调用 xcodebuild。
+# 原因：pbxproj 解析失败时 xcodebuild 只会打印
+#   "JSON text did not start with array or object"
+# 和 "The project is damaged and cannot be opened due to a parse error"，
+# 完全看不出真正错在哪一行，极难排查。这里先给出精确位置。
+PBXPROJ="$ROOT_DIR/$PROJECT_NAME.xcodeproj/project.pbxproj"
+if [[ -f "$PBXPROJ" ]]; then
+  PY=""
+  for cand in python3 python; do
+    if command -v "$cand" >/dev/null 2>&1; then PY="$cand"; break; fi
+  done
+  if [[ -n "$PY" && -f "$ROOT_DIR/tools/validate_pbxproj.py" ]]; then
+    info "校验 project.pbxproj 语法…"
+    if ! "$PY" "$ROOT_DIR/tools/validate_pbxproj.py" "$PBXPROJ"; then
+      die "project.pbxproj 校验不通过（原因见上）。
+   修复方式：运行  python3 tools/generate_xcodeproj.py  重新生成工程文件。"
+    fi
+  else
+    warn "跳过 pbxproj 校验（需要 python3 与 tools/validate_pbxproj.py）"
+  fi
+
+  # 用 Ruby 的 xcodeproj（CocoaPods 同款）做二次交叉验证，最接近 Xcode 的真实行为
+  if command -v ruby >/dev/null 2>&1 && ruby -e 'require "xcodeproj"' >/dev/null 2>&1; then
+    info "用 xcodeproj 库交叉验证（模拟 Xcode 读取）…"
+    if ! ruby -e "require 'xcodeproj'; p=Xcodeproj::Project.open('$ROOT_DIR/$PROJECT_NAME.xcodeproj'); puts \"   目标: #{p.targets.map(&:name).join(', ')}\""; then
+      die "Xcode 工程无法被 xcodeproj 解析。请运行 python3 tools/generate_xcodeproj.py 重新生成。"
+    fi
+  fi
+
+  # 让 xcodebuild 自己确认能识别工程（快速失败，避免白等编译）
+  info "确认 xcodebuild 能识别工程…"
+  if ! xcodebuild -project "$ROOT_DIR/$PROJECT_NAME.xcodeproj" -list >/dev/null 2>&1; then
+    echo "--- xcodebuild -list 的原始输出 ---"
+    xcodebuild -project "$ROOT_DIR/$PROJECT_NAME.xcodeproj" -list 2>&1 | tail -20 || true
+    die "xcodebuild 无法读取该工程（见上方原始输出）"
+  fi
+  ok "工程文件校验通过"
+fi
+
 # ---------------------------------------------------------------- 2. 编译
 info "开始编译（首次编译约 1~3 分钟）…"
 set +e

@@ -36,6 +36,27 @@ class UUIDGen:
         return "FACEB00C%016X" % self.counter
 
 
+# OpenStep plist（old-style）里「非引号字符串」允许出现的字符。
+# Apple 的 CFPropertyList 旧式解析器只接受字母、数字以及 _ $ / : . - ，
+# 其余任何字符都必须用双引号包裹。踩过的坑：文件名里的 `+`
+# （UIImage+Extensions.swift / UIView+Layout.swift）没加引号，
+# 导致 Xcode 报 “project is damaged and cannot be opened due to a parse error”，
+# 而 xcodebuild 只吐一句 “JSON text did not start with array or object”，极难定位。
+_UNQUOTED_OK = frozenset(
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "0123456789_$/:.-"
+)
+
+
+def q(value):
+    """把值安全地写成 pbxproj 标量：必要时加双引号。"""
+    s = str(value)
+    if s and all(c in _UNQUOTED_OK for c in s):
+        return s
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
 def collect_files():
     """返回 (swift 相对路径列表, 资源相对路径列表, info.plist 相对路径)"""
     swift_files = []
@@ -125,16 +146,16 @@ def main():
     w("/* Begin PBXFileReference section */")
     app_product_ref = gen.next()
     w("\t\t%s /* %s.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; "
-      "includeInIndex = 0; path = %s.app; sourceTree = BUILT_PRODUCTS_DIR; };"
-      % (app_product_ref, PROJECT_NAME, PROJECT_NAME))
+      "includeInIndex = 0; path = %s; sourceTree = BUILT_PRODUCTS_DIR; };"
+      % (app_product_ref, PROJECT_NAME, q(PROJECT_NAME + ".app")))
     for path in swift_files:
         name = os.path.basename(path)
         w("\t\t%s /* %s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; "
-          "path = %s; sourceTree = \"<group>\"; };" % (file_refs[path], name, name))
+          "path = %s; sourceTree = \"<group>\"; };" % (file_refs[path], name, q(name)))
     for path in assets:
         name = os.path.basename(path)
         w("\t\t%s /* %s */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; "
-          "path = %s; sourceTree = \"<group>\"; };" % (file_refs[path], name, name))
+          "path = %s; sourceTree = \"<group>\"; };" % (file_refs[path], name, q(name)))
     w("\t\t%s /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; "
       "path = Info.plist; sourceTree = \"<group>\"; };" % info_plist_ref)
     w("/* End PBXFileReference section */")
@@ -181,9 +202,9 @@ def main():
             lines.append("\t\t\t\t%s," % c)
         lines.append("\t\t\t);")
         if is_root_group:
-            lines.append("\t\t\tpath = %s;" % SRC_ROOT_NAME)
+            lines.append("\t\t\tpath = %s;" % q(SRC_ROOT_NAME))
         else:
-            lines.append("\t\t\tpath = %s;" % name)
+            lines.append("\t\t\tpath = %s;" % q(name))
         lines.append("\t\t\tsourceTree = \"<group>\";")
         lines.append("\t\t};")
         group_chunks.append("\n".join(lines))
@@ -242,8 +263,8 @@ def main():
     w("\t\t\t);")
     w("\t\t\tdependencies = (")
     w("\t\t\t);")
-    w("\t\t\tname = %s;" % PROJECT_NAME)
-    w("\t\t\tproductName = %s;" % PROJECT_NAME)
+    w("\t\t\tname = %s;" % q(PROJECT_NAME))
+    w("\t\t\tproductName = %s;" % q(PROJECT_NAME))
     w("\t\t\tproductReference = %s /* %s.app */;" % (app_product_ref, PROJECT_NAME))
     w("\t\t\tproductType = \"com.apple.product-type.application\";")
     w("\t\t};")
@@ -413,7 +434,7 @@ def main():
             else:
                 w("\t\t\t\t%s" % line)
         w("\t\t\t};")
-        w("\t\t\tname = %s;" % name)
+        w("\t\t\tname = %s;" % q(name))
         w("\t\t};")
 
     w("")

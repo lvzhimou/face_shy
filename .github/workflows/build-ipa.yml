@@ -37,8 +37,13 @@ jobs:
           echo "Swift:  $(swift --version 2>/dev/null | head -1)"
           python3 --version 2>/dev/null || echo "python3 不可用"
 
-      - name: 检查工程文件可被识别（快速失败）
-        run: xcodebuild -project FaceShy.xcodeproj -list
+      - name: 校验工程文件（快速失败）
+        # 先做语法校验：pbxproj 出错时 xcodebuild 只会报
+        # "JSON text did not start with array or object" + "project is damaged"，
+        # 完全看不出真正原因，所以这里给出精确到行列的报错。
+        run: |
+          python3 tools/validate_pbxproj.py
+          xcodebuild -project FaceShy.xcodeproj -list
 
       - name: 编译并打包未签名 IPA
         env:
