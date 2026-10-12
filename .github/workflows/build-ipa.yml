@@ -2,8 +2,10 @@ name: 构建未签名 IPA
 
 # 说明：
 #   · 推送到 main / master 后会自动构建（无需手动点）
-#   · 也可以在 Actions 页面手动触发，并可自定义 Bundle Identifier
+#   · 也可以在 Actions 页面手动触发（手机浏览器登录 GitHub 也能点），并可自定义 Bundle Identifier
 #   · 产物是「未签名 IPA」，用 Sideloadly / AltStore / 轻松签 等自签工具安装
+#   · 构建成功后自动覆盖上传到 Release v1.0.0（附件名固定 FaceShy-unsigned.ipa，
+#     所以「最新版直链」永远指向最近一次成功构建，手机端不需要电脑参与）
 on:
   workflow_dispatch:
     inputs:
@@ -17,6 +19,10 @@ on:
         default: ''
   push:
     branches: [main, master]
+
+# 上传 Release 附件需要 contents 写权限
+permissions:
+  contents: write
 
 jobs:
   build-ipa:
@@ -74,3 +80,24 @@ jobs:
           path: build/*.ipa
           if-no-files-found: error
           retention-days: 30
+
+      - name: 同步到 Release（手机可直接下载）
+        # 电脑关机时，手机浏览器登录 GitHub -> Actions -> 点「Run workflow」即可重新构建，
+        # 构建完成后 IPA 自动出现在 Releases 页，手机直接下载即可，
+        # 再用手机端签名工具（轻松签 / ESign / 全能签）签名安装，全程不需要电脑。
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v1.0.0
+        run: |
+          IPA=build/FaceShy-unsigned.ipa
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$IPA" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "$IPA" \
+              --title "隐颜 FaceShy · 未签名 IPA" \
+              --notes "自动构建于 $(date -u '+%Y-%m-%d %H:%M UTC')，commit ${GITHUB_SHA::7}" \
+              --repo "$GITHUB_REPOSITORY"
+          fi
+          echo "=== Release 当前附件 ==="
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq '.assets[] | "\(.name)  \(.size) bytes  更新于 \(.updatedAt)"'
