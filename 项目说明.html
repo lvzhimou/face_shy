@@ -351,14 +351,22 @@ cgContext.<span class="f">setAlpha</span>(item.opacity)
     </div>
     <div class="card">
       <h3>路线 A · GitHub Actions 云端 macOS 构建（推荐，不需要自己有 Mac）</h3>
-      <p>工作流文件已就位：<code style="font-family:Menlo">.github/workflows/build-ipa.yml</code>，使用免费的 macOS 运行器。</p>
-      <div class="code-label">在 FaceShy/ 目录执行</div>
-<pre>git init &amp;&amp; git add . &amp;&amp; git commit -m <span class="s">"FaceShy iOS app"</span>
-git branch -M main
-git remote add origin https://github.com/你的用户名/faceshy.git
-git push -u origin main</pre>
-      <p style="margin-top:12px">推送后进入仓库 <b>Actions</b> 标签 → 「构建未签名 IPA」→ <b>Run workflow</b>。
-         约 2~4 分钟完成，在运行记录底部 <b>Artifacts</b> 下载 <code style="font-family:Menlo">FaceShy-unsigned-ipa</code>，解压即得 IPA。</p>
+      <p>工作流文件已就位：<code style="font-family:Menlo">.github/workflows/build-ipa.yml</code>，使用免费的 macOS 运行器。
+         <b>本地仓库已完成首次提交（43 个文件），你只需推上去。</b></p>
+      <p style="margin-top:12px"><b>① 建空仓库：</b><code style="font-family:Menlo">github.com/new</code>，
+         仓库名如 <code style="font-family:Menlo">face_shy</code>，Public / Private 都行；
+         ⚠️ 别勾 Add a README / .gitignore / License（会有冲突）。</p>
+      <p style="margin-top:12px"><b>② 推送（一条命令，脚本会自动补提交 + 配 remote + 失败给排查指引）：</b></p>
+      <div class="code-label">Git Bash / 终端</div>
+<pre>cd FaceShy
+./push_to_github.sh 你的GitHub用户名</pre>
+      <p style="margin-top:12px"><b>③ 等构建：</b>推送即触发，去
+         <code style="font-family:Menlo">github.com/你的用户名/face_shy/actions</code> 看进度（2~4 分钟）。
+         也可手动 Actions → Run workflow，顺便自定义 Bundle ID。</p>
+      <p style="margin-top:12px"><b>④ 取包：</b>点进运行记录 → 底部 <b>Artifacts</b> → 下载
+         <code style="font-family:Menlo">FaceShy-unsigned-ipa</code> → 解压得 IPA。</p>
+      <p style="margin-top:12px">首次推送会弹 GitHub 浏览器登录；若改为让输入账号密码，
+         <b>密码处填 Personal Access Token</b>（勾选 <code style="font-family:Menlo">repo</code> 权限）。</p>
     </div>
     <div class="card">
       <h3>路线 B · 找一台 Mac 跑一条命令</h3>

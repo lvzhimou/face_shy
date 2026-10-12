@@ -53,23 +53,43 @@ xcodebuild -project FaceShy.xcodeproj -scheme FaceShy \
 
 ### 路线 A：GitHub Actions 云端 macOS 构建（推荐，不需要自己有 Mac）
 
-仓库里已经放好工作流 `.github/workflows/build-ipa.yml`，免费额度足够。
+**本地仓库已经初始化好并完成首次提交**（43 个文件），你只需要推上去。
 
+**第 1 步 · 建一个空仓库**
+打开 https://github.com/new ，仓库名随意（例如 `face_shy`），Public / Private 都行。
+⚠️ **不要**勾选 `Add a README file` / `.gitignore` / `License`，否则推送时会有冲突。
+
+**第 2 步 · 推送**
 ```bash
-# 在 FaceShy/ 目录（也就是仓库根目录）
-git init
-git add .
-git commit -m "FaceShy iOS app"
+cd FaceShy
+./push_to_github.sh 你的GitHub用户名            # 仓库名默认 face_shy
+./push_to_github.sh 你的GitHub用户名 face_shy   # 指定仓库名
+```
+脚本会自动补齐提交、配置 remote、推送，并在失败时给出针对性排查指引。
+首次推送会弹出 GitHub 登录（浏览器授权即可）；如果它改成让你输入账号密码，
+**密码处填 Personal Access Token**（https://github.com/settings/tokens → Generate new token (classic) → 勾选 `repo`）。
+
+也可以不用脚本，手动三条命令：
+```bash
+git remote add origin https://github.com/你的用户名/face_shy.git
 git branch -M main
-git remote add origin https://github.com/你的用户名/faceshy.git
 git push -u origin main
 ```
 
-推送后：打开仓库 → **Actions** 标签 → 左侧「构建未签名 IPA」→ **Run workflow**。
-约 2~4 分钟跑完，在运行记录页面底部 **Artifacts** 里下载 `FaceShy-unsigned-ipa`，解压即得到 `FaceShy-unsigned.ipa`。
+**第 3 步 · 等构建**
+推送本身就会触发构建（无需手动点）。打开 `https://github.com/你的用户名/face_shy/actions`，
+2~4 分钟后出现绿色 ✔。若想手动触发：**Actions** → 「构建未签名 IPA」→ **Run workflow**
+（可顺便自定义 Bundle Identifier 与构建号）。
 
-> 不想推代码也可以：任何支持 macOS 的云构建服务都行（Codemagic 免费额度 500 分钟/月、
-> Appcircle、Bitrise 等），把 `build_ipa.sh` 配成构建脚本即可。
+**第 4 步 · 下载 IPA**
+点进那条运行记录 → 页面底部 **Artifacts** → 下载 `FaceShy-unsigned-ipa` → 解压得到 `FaceShy-unsigned.ipa`。
+
+> **额度**：仓库设为 **Public** 时 GitHub 的 macOS 构建完全免费且不限量；**Private** 也可用
+> （免费账号每月 2000 分钟额度，macOS 按 10 倍计费，约够跑 60 次构建）。
+> 私有仓库的 Artifacts 需要登录 GitHub 才能下载。
+
+> 不想用 GitHub 也行：任何支持 macOS 的云构建服务都可以（Codemagic 免费 500 分钟/月、Appcircle、Bitrise），
+> 把 `build_ipa.sh` 配成构建脚本即可。
 
 ### 路线 B：找一台 Mac 跑一条命令
 
@@ -126,6 +146,7 @@ FaceShy/
 │   ├── project.pbxproj                 # 由 tools/generate_xcodeproj.py 生成
 │   └── xcshareddata/xcschemes/FaceShy.xcscheme
 ├── build_ipa.sh                        # ★ 一键构建未签名 IPA（macOS）
+├── push_to_github.sh                   # ★ 一键推送到 GitHub，自动触发云端构建
 ├── .github/workflows/build-ipa.yml     # ★ 云端 macOS 构建，产出 IPA 产物
 ├── tools/pack_ipa.py                   # ★ IPA 打包 / 校验工具（跨平台）
 ├── project.yml                         # XcodeGen 备用方案（可选）
