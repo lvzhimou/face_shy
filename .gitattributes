@@ -1,0 +1,11 @@
+# 统一换行符为 LF，避免在 Windows 上编辑后脚本在 macOS 运行报错
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.py   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.swift text eol=lf
+
+*.png binary
+*.ipa binary

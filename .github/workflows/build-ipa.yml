@@ -1,0 +1,71 @@
+name: 构建未签名 IPA
+
+# 说明：
+#   · 推送到 main / master 后会自动构建（无需手动点）
+#   · 也可以在 Actions 页面手动触发，并可自定义 Bundle Identifier
+#   · 产物是「未签名 IPA」，用 Sideloadly / AltStore / 轻松签 等自签工具安装
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: Bundle Identifier（默认 com.faceshy.app）
+        required: false
+        default: com.faceshy.app
+      build_number:
+        description: 构建号 / 版本号 build（留空则用 run number）
+        required: false
+        default: ''
+  push:
+    branches: [main, master]
+
+jobs:
+  build-ipa:
+    name: 编译并打包 IPA
+    # macos-latest 始终指向最新稳定镜像（自带 Xcode），避免固定版本被退役导致构建突然失败
+    # 如需固定，可改成 macos-14 或 macos-15
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 显示构建环境
+        run: |
+          echo "macOS:  $(sw_vers -productVersion)"
+          echo "Xcode:  $(xcodebuild -version | head -1)"
+          echo "Swift:  $(swift --version 2>/dev/null | head -1)"
+          python3 --version 2>/dev/null || echo "python3 不可用"
+
+      - name: 检查工程文件可被识别（快速失败）
+        run: xcodebuild -project FaceShy.xcodeproj -list
+
+      - name: 编译并打包未签名 IPA
+        env:
+          BUNDLE_ID: ${{ inputs.bundle_id || 'com.faceshy.app' }}
+          BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
+        run: |
+          chmod +x build_ipa.sh
+          ./build_ipa.sh
+
+      - name: 显示产物信息
+        run: |
+          ls -lh build/*.ipa
+          echo "--- 包内结构（前 25 项）---"
+          unzip -l build/FaceShy-unsigned.ipa | head -25
+
+      - name: 校验 IPA 结构
+        run: |
+          if command -v python3 >/dev/null 2>&1; then
+            python3 tools/pack_ipa.py --verify build/FaceShy-unsigned.ipa
+          else
+            echo "python3 不可用，跳过校验（已在上一步列出包内结构）"
+          fi
+
+      - name: 上传 IPA 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: FaceShy-unsigned-ipa
+          path: build/*.ipa
+          if-no-files-found: error
+          retention-days: 30

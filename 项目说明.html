@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐颜 FaceShy · iOS 项目说明</title>
+<style>
+  :root{
+    --brand:#5B4BE8;
+    --brand-soft:#EDEAFF;
+    --bg:#F4F4F9;
+    --surface:#FFFFFF;
+    --surface-alt:#EDEDF4;
+    --text:#15161C;
+    --text-2:#6B6E7C;
+    --text-3:#9A9DAB;
+    --line:#E3E3EC;
+    --green:#1EA362;
+    --red:#F0453C;
+    --code-bg:#1A1B23;
+    --code-text:#E8E9F0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:40px 24px 80px}
+
+  /* ---------- 头部 ---------- */
+  .hero{
+    background:linear-gradient(135deg,#5B4BE8 0%,#8B5CF6 55%,#A855F7 100%);
+    border-radius:24px;padding:36px 34px;color:#fff;position:relative;overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;
+    background:rgba(255,255,255,.13);border-radius:50%;
+  }
+  .hero::before{
+    content:"";position:absolute;right:60px;bottom:-90px;width:180px;height:180px;
+    background:rgba(255,255,255,.09);border-radius:50%;
+  }
+  .hero h1{font-size:32px;letter-spacing:-.5px;margin-bottom:8px}
+  .hero p{opacity:.92;font-size:15px;max-width:640px;position:relative;z-index:1}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;position:relative;z-index:1}
+  .tag{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);
+       padding:5px 12px;border-radius:999px;font-size:12.5px;backdrop-filter:blur(4px)}
+
+  /* ---------- 统计 ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0 34px}
+  .stat{background:var(--surface);border-radius:16px;padding:18px;text-align:center;
+        border:1px solid var(--line)}
+  .stat b{display:block;font-size:24px;color:var(--brand);letter-spacing:-.5px}
+  .stat span{font-size:12.5px;color:var(--text-2)}
+
+  /* ---------- 通用区块 ---------- */
+  section{margin-top:34px}
+  h2{font-size:19px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  h2 .num{
+    width:26px;height:26px;border-radius:8px;background:var(--brand-soft);color:var(--brand);
+    font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;
+  }
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px}
+  .card + .card{margin-top:14px}
+  .card h3{font-size:14.5px;margin-bottom:8px}
+  .card p{font-size:13.5px;color:var(--text-2)}
+  .muted{font-size:13px;color:var(--text-2)}
+
+  /* ---------- 架构图 ---------- */
+  .layers{display:grid;gap:12px}
+  .layer{border-radius:16px;padding:16px 18px;border:1px solid var(--line);background:var(--surface)}
+  .layer .lh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .layer .lh b{font-size:14px}
+  .layer .lh em{font-size:12px;color:var(--text-3);font-style:normal}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12px;padding:5px 11px;border-radius:9px;background:var(--surface-alt);
+        color:var(--text-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .chip.core{background:var(--brand-soft);color:var(--brand);font-weight:600}
+
+  /* ---------- 流程图 ---------- */
+  .flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .step{flex:1 1 120px;min-width:120px;background:var(--surface);border:1px solid var(--line);
+        border-radius:14px;padding:13px 12px;text-align:center}
+  .step b{display:block;font-size:13px;margin-bottom:3px}
+  .step span{font-size:11.5px;color:var(--text-3);line-height:1.4;display:block}
+  .arrow{color:var(--text-3);font-size:15px;flex:none}
+
+  /* ---------- 代码 ---------- */
+  pre{background:var(--code-bg);color:var(--code-text);border-radius:14px;padding:16px 18px;
+      overflow-x:auto;font-size:12.5px;line-height:1.7;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  pre .c{color:#7C8399}
+  pre .k{color:#C792EA}
+  pre .s{color:#A5E075}
+  pre .f{color:#82AAFF}
+  .code-label{font-size:12px;color:var(--text-3);margin:14px 0 6px;
+              font-family:ui-monospace,Menlo,monospace}
+
+  /* ---------- 表格 ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  tr:last-child td{border-bottom:none}
+  td:first-child{white-space:nowrap}
+  .ok{color:var(--green);font-weight:600}
+
+  /* ---------- 文件树 ---------- */
+  .tree{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+        line-height:2;color:var(--text-2);overflow-x:auto;white-space:pre}
+  .tree b{color:var(--text);font-weight:600}
+  .tree i{color:var(--brand);font-style:normal}
+
+  /* ---------- 步骤 ---------- */
+  .steps{counter-reset:s;display:grid;gap:10px}
+  .stepline{display:flex;gap:12px;align-items:flex-start;background:var(--surface);
+            border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .stepline::before{
+    counter-increment:s;content:counter(s);flex:none;width:24px;height:24px;border-radius:50%;
+    background:var(--brand);color:#fff;font-size:12px;display:flex;align-items:center;
+    justify-content:center;font-weight:700;margin-top:2px;
+  }
+  .stepline div{font-size:13.5px}
+  .stepline code{background:var(--surface-alt);padding:2px 6px;border-radius:6px;
+                 font-size:12px;font-family:Menlo,monospace}
+
+  .note{background:#FFF7E6;border:1px solid #FFE2A8;color:#7A5A00;
+        border-radius:14px;padding:14px 16px;font-size:13px}
+  footer{margin-top:44px;text-align:center;font-size:12.5px;color:var(--text-3)}
+  @media(max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .hero h1{font-size:25px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>隐颜 FaceShy</h1>
+    <p>iOS 本地 AI 照片人脸遮挡 App — Apple Vision 端侧识别人脸，一键给照片上的人脸贴 emoji 遮挡。
+       所有图片只在本机处理，不上传任何服务器。对标 Facemoji。</p>
+    <div class="tags">
+      <span class="tag">Swift 5</span>
+      <span class="tag">UIKit · 纯代码</span>
+      <span class="tag">Apple Vision</span>
+      <span class="tag">iOS 16+ / iPhone</span>
+      <span class="tag">零第三方依赖</span>
+      <span class="tag">本地离线处理</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>26</b><span>Swift 源文件</span></div>
+    <div class="stat"><b>~3.6k</b><span>代码行数</span></div>
+    <div class="stat"><b>0</b><span>第三方依赖</span></div>
+    <div class="stat"><b>0</b><span>网络请求</span></div>
+  </div>
+
+  <!-- 架构 -->
+  <section>
+    <h2><span class="num">1</span>分层架构</h2>
+    <div class="layers">
+      <div class="layer">
+        <div class="lh"><span class="dot" style="background:#5B4BE8"></span>
+          <b>Controllers · 页面层</b><em>7 个页面，负责流程编排，不写具体算法</em></div>
+        <div class="chips">
+          <span class="chip core">EditorViewController ★</span>
+          <span class="chip">HomeViewController</span>
+          <span class="chip">EmojiPickerViewController</span>
+          <span class="chip">TextWatermarkViewController</span>
+          <span class="chip">OpacitySheetViewController</span>
+          <span class="chip">SettingsViewController</span>
+          <span class="chip">PrivacyViewController</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lh"><span class="dot" style="background:#8B5CF6"></span>
+          <b>Views · 视图层</b><em>可复用的画布与可交互元素</em></div>
+        <div class="chips">
+          <span class="chip core">EditableItemView ★</span>
+          <span class="chip core">CanvasView ★</span>
+          <span class="chip">EditorToolbarView</span>
+          <span class="chip">SelectedItemBar</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lh"><span class="dot" style="background:#22A06B"></span>
+          <b>Services · 服务层</b><em>纯能力封装，与 UI 无关，可独立测试</em></div>
+        <div class="chips">
+          <span class="chip core">FaceDetector ★</span>
+          <span class="chip core">EditorRenderer ★</span>
+          <span class="chip">CustomStickerStore</span>
+          <span class="chip">PhotoLibraryService</span>
+          <span class="chip">CameraService</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lh"><span class="dot" style="background:#F59E0B"></span>
+          <b>Models · 模型层</b><em>数据与几何，无 UI 依赖</em></div>
+        <div class="chips">
+          <span class="chip core">EditorItem ★</span>
+          <span class="chip">EmojiCatalog</span>
+          <span class="chip">AppSettings</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lh"><span class="dot" style="background:#9AA0B0"></span>
+          <b>Support · 基础设施</b><em>主题、布局工具、图片工具、提示</em></div>
+        <div class="chips">
+          <span class="chip">Theme（深浅色适配）</span>
+          <span class="chip">UIView+Layout</span>
+          <span class="chip">UIImage+Extensions</span>
+          <span class="chip">HUD / Toast</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 主流程 -->
+  <section>
+    <h2><span class="num">2</span>主流程</h2>
+    <div class="flow">
+      <div class="step"><b>导入照片</b><span>PHPicker 选图<br>或相机拍照</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>Vision 识别</b><span>端侧人脸检测<br>支持多人脸</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>自动贴 emoji</b><span>按脸部大小定位<br>跟随头部倾斜</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>手势微调</b><span>拖动 / 双指缩放<br>双指旋转</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>水印叠加</b><span>文字 / 图片水印<br>图层上下调整</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>导出保存</b><span>原分辨率合成<br>写入相册</span></div>
+    </div>
+  </section>
+
+  <!-- 关键实现 -->
+  <section>
+    <h2><span class="num">3</span>三个关键实现</h2>
+
+    <div class="card">
+      <h3>① Vision 坐标 → 视图坐标（最容易写错的地方）</h3>
+      <p>Vision 的 boundingBox 是归一化坐标且<b>原点在左下角</b>，UIKit 原点在左上角，必须翻转 Y 轴。
+         贴纸尺寸在原始人脸框基础上外扩 16%，确保盖住发际线与耳侧；旋转角取 <code style="font-family:Menlo">-roll</code>。</p>
+      <div class="code-label">EditorViewController.swift</div>
+<pre><span class="k">private func</span> <span class="f">canvasRect</span>(for normalizedRect: CGRect, in canvasSize: CGSize) -&gt; CGRect {
+    <span class="k">let</span> width  = normalizedRect.width  * canvasSize.width
+    <span class="k">let</span> height = normalizedRect.height * canvasSize.height
+    <span class="k">let</span> x = normalizedRect.minX * canvasSize.width
+    <span class="k">let</span> y = (<span class="s">1</span> - normalizedRect.maxY) * canvasSize.height   <span class="c">// Y 轴翻转</span>
+    <span class="k">return</span> CGRect(x: x, y: y, width: width, height: height)
+}</pre>
+    </div>
+
+    <div class="card">
+      <h3>② 手势交互：缩放不用 transform，改用 bounds + 字号</h3>
+      <p>这样 emoji 放大 5 倍依然锐利，并且导出渲染可以直接复用
+         <code style="font-family:Menlo">baseSize × scale</code> 的几何数据。捏合与旋转通过
+         <code style="font-family:Menlo">shouldRecognizeSimultaneouslyWith</code> 同时生效。</p>
+      <div class="code-label">EditableItemView.swift</div>
+<pre><span class="k">private func</span> <span class="f">apply</span>(center:relative, scale:CGFloat, rotation:CGFloat, opacity:CGFloat) {
+    self.center = center
+    bounds = CGRect(x: <span class="s">0</span>, y: <span class="s">0</span>,
+                    width:  baseSize.width  * scaleFactor,
+                    height: baseSize.height * scaleFactor)
+    transform = CGAffineTransform(rotationAngle: rotationAngle)  <span class="c">// 只负责旋转</span>
+    contentView?.alpha = opacityValue
+    <span class="f">applyContentAppearance</span>()   <span class="c">// 同步字号，保证清晰</span>
+}</pre>
+    </div>
+
+    <div class="card">
+      <h3>③ 导出合成：与原图分辨率一致，且所见即所得</h3>
+      <p>画布坐标（point）与导出坐标（像素）相差一个系数 <code style="font-family:Menlo">scale</code>；
+         预览视图与导出渲染使用<b>完全相同的中心点 / 缩放 / 旋转 / 透明度</b>，
+         因此导出结果与编辑界面像素级一致。最长边超过 4096px 才等比收敛，防止内存溢出。</p>
+      <div class="code-label">EditorRenderer.swift</div>
+<pre><span class="k">let</span> scale = basePixels.width / canvasSize.width
+cgContext.<span class="f">translateBy</span>(x: item.center.x * scale, y: item.center.y * scale)
+cgContext.<span class="f">rotate</span>(by: item.rotation)
+cgContext.<span class="f">setAlpha</span>(item.opacity)
+<span class="c">// 在该变换下绘制 emoji / 图片 / 文字</span></pre>
+    </div>
+  </section>
+
+  <!-- 隐私 -->
+  <section>
+    <h2><span class="num">4</span>隐私设计（贯穿全局）</h2>
+    <div class="card">
+      <table>
+        <tr><th>能力</th><th>实现方式</th><th>需要的权限</th></tr>
+        <tr><td>相册选图</td><td>PHPickerViewController（<b>进程外</b>运行）</td><td class="ok">不需要相册读取权限</td></tr>
+        <tr><td>保存图片</td><td>PHAssetChangeRequest</td><td>仅 .addOnly（仅添加）</td></tr>
+        <tr><td>相机拍照</td><td>AVCaptureDevice.requestAccess(.video)</td><td>点「拍照」时才申请</td></tr>
+        <tr><td>人脸识别</td><td>Apple Vision（端侧芯片运算）</td><td class="ok">无</td></tr>
+        <tr><td>自定义贴纸</td><td>沙盒 Application Support/CustomStickers</td><td class="ok">无</td></tr>
+      </table>
+      <p style="margin-top:14px">App 内<b>没有任何网络请求代码</b>，开启飞行模式可全功能使用。</p>
+    </div>
+  </section>
+
+  <!-- 文件树 -->
+  <section>
+    <h2><span class="num">5</span>项目结构</h2>
+    <div class="card">
+      <div class="tree"><b>FaceShy/</b>
+├── <b>FaceShy.xcodeproj/</b>              <i>可直接打开的 Xcode 工程</i>
+├── project.yml                        <i>XcodeGen 备用方案（可选）</i>
+├── README.md                          <i>运行说明 / 功能对照</i>
+├── tools/generate_xcodeproj.py        <i>工程文件生成器</i>
+└── <b>FaceShy/</b>
+    ├── App/                           <i>AppDelegate · SceneDelegate · NAV</i>
+    ├── Models/                        <i>EditorItem ★ · EmojiCatalog · AppSettings</i>
+    ├── Services/                      <i>FaceDetector ★ · EditorRenderer ★</i>
+    │                                  <i>CustomStickerStore · PhotoLibrary · Camera</i>
+    ├── Views/                         <i>CanvasView ★ · EditableItemView ★</i>
+    │                                  <i>EditorToolbarView · SelectedItemBar</i>
+    ├── Controllers/                   <i>Editor ★ · Home · EmojiPicker</i>
+    │                                  <i>TextWatermark · Opacity · Settings · Privacy</i>
+    ├── Support/                       <i>Theme · UIView+Layout · UIImage+Ext · HUD</i>
+    └── Resources/                     <i>Info.plist · Assets.xcassets</i></div>
+    </div>
+  </section>
+
+  <!-- 运行 -->
+  <section>
+    <h2><span class="num">6</span>如何运行</h2>
+    <div class="steps">
+      <div class="stepline"><div>把整个 <code>FaceShy</code> 文件夹拷到 Mac，双击 <code>FaceShy.xcodeproj</code> 打开工程。</div></div>
+      <div class="stepline"><div>Scheme 选 <code>FaceShy</code>，挑一台 iPhone 模拟器（如 iPhone 15），按 <code>⌘R</code> 运行。</div></div>
+      <div class="stepline"><div>真机运行：Target → Signing &amp; Capabilities 勾选 <code>Automatically manage signing</code> 并选择你的 Apple ID Team。</div></div>
+      <div class="stepline"><div>把 <code>com.faceshy.app</code> 改成独一无二的 Bundle Identifier，否则无法签名安装。</div></div>
+      <div class="stepline"><div>模拟器没有相机，请用「从相册选择照片」；先把图片拖进模拟器窗口即可存入相册。</div></div>
+      <div class="stepline"><div>新增 / 删除 .swift 文件后，执行 <code>python3 tools/generate_xcodeproj.py</code> 刷新工程文件。</div></div>
+    </div>
+    <div class="note" style="margin-top:14px">
+      <b>AppIcon 目前是空壳</b>，可正常编译运行，仅缺图标；上架前放一张 1024×1024 PNG 到
+      <code style="font-family:Menlo">Assets.xcassets/AppIcon.appiconset/</code> 即可。
+    </div>
+  </section>
+
+  <!-- IPA -->
+  <section>
+    <h2><span class="num">7</span>如何拿到 IPA 并自签安装</h2>
+    <div class="note" style="margin-bottom:14px">
+      <b>⚠️ 硬约束：iOS 应用无法在 Windows / Linux 上编译。</b><br>
+      UIKit、Vision、iOS SDK 只存在于 Apple 的 Xcode 工具链里，没有 Windows 替代方案。产出 IPA 必须经过 macOS。
+      下面两条路线都已在本仓库中配置好。
+    </div>
+    <div class="card">
+      <h3>路线 A · GitHub Actions 云端 macOS 构建（推荐，不需要自己有 Mac）</h3>
+      <p>工作流文件已就位：<code style="font-family:Menlo">.github/workflows/build-ipa.yml</code>，使用免费的 macOS 运行器。</p>
+      <div class="code-label">在 FaceShy/ 目录执行</div>
+<pre>git init &amp;&amp; git add . &amp;&amp; git commit -m <span class="s">"FaceShy iOS app"</span>
+git branch -M main
+git remote add origin https://github.com/你的用户名/faceshy.git
+git push -u origin main</pre>
+      <p style="margin-top:12px">推送后进入仓库 <b>Actions</b> 标签 → 「构建未签名 IPA」→ <b>Run workflow</b>。
+         约 2~4 分钟完成，在运行记录底部 <b>Artifacts</b> 下载 <code style="font-family:Menlo">FaceShy-unsigned-ipa</code>，解压即得 IPA。</p>
+    </div>
+    <div class="card">
+      <h3>路线 B · 找一台 Mac 跑一条命令</h3>
+      <div class="code-label">Terminal</div>
+<pre>cd FaceShy
+chmod +x build_ipa.sh
+./build_ipa.sh                       <span class="c"># 产物 build/FaceShy-unsigned.ipa</span>
+BUNDLE_ID=com.你的名字.faceshy ./build_ipa.sh   <span class="c"># 换 Bundle ID</span></pre>
+      <p style="margin-top:12px">脚本流程：<code style="font-family:Menlo">xcodebuild</code> 以
+         <code style="font-family:Menlo">CODE_SIGNING_ALLOWED=NO</code> 编译 Release + arm64 →
+         <code style="font-family:Menlo">.app</code> 放入
+         <code style="font-family:Menlo">Payload/</code> → 打成符合 iOS 规范的未签名 IPA →
+         自动打印安装指引。</p>
+    </div>
+    <div class="card">
+      <h3>拿到 IPA 后：自签工具怎么选</h3>
+      <table>
+        <tr><th>工具</th><th>运行位置</th><th>说明</th></tr>
+        <tr><td>Sideloadly</td><td>Windows / macOS 电脑</td><td>最省事：选 IPA → 填 Apple ID → Start，自动签名并安装</td></tr>
+        <tr><td>AltStore / SideStore</td><td>iPhone</td><td>IPA 存到「文件」，App 内导入安装</td></tr>
+        <tr><td>轻松签 / ESign / 全能签</td><td>iPhone</td><td>导入 IPA，用免费证书签名后安装</td></tr>
+        <tr><td>爱思助手</td><td>Windows</td><td>需先自签再安装，不能直接装未签名包</td></tr>
+      </table>
+      <p style="margin-top:14px"><b>免费 Apple ID 限制：</b>签名 7 天有效期，到期重签；最多同时 3 个自签 App。有 99 美元开发者账号则 1 年。</p>
+      <p style="margin-top:8px"><b>安装后第一次打开会提示「不受信任的开发者」</b>：到 设置 → 通用 → VPN与设备管理 → 开发者App → 选中你的 Apple ID → <b>信任</b>。设备需 iOS 16.0+。</p>
+    </div>
+    <div class="card">
+      <h3>自签前建议先校验（跨平台，Windows 也能跑）</h3>
+      <div class="code-label">Terminal</div>
+<pre>python3 tools/pack_ipa.py --verify build/FaceShy-unsigned.ipa</pre>
+      <p style="margin-top:12px">检查 <code style="font-family:Menlo">Payload/</code> 结构、Info.plist 关键字段、
+         <b>二进制是否为 arm64</b>（不是 arm64 真机装不上）、可执行权限位、签名状态。CI 里也跑了这一步。
+         已拿到 <code style="font-family:Menlo">.app</code> 想自己打包：
+         <code style="font-family:Menlo">python3 tools/pack_ipa.py /path/to/FaceShy.app</code></p>
+    </div>
+  </section>
+
+  <!-- 功能对照 -->
+  <section>
+    <h2><span class="num">8</span>PRD 功能对照</h2>
+    <div class="card">
+      <table>
+        <tr><th>需求</th><th>实现位置</th><th>状态</th></tr>
+        <tr><td>相册选图 / 相机拍照</td><td>HomeViewController · PhotoPicker / CameraService</td><td class="ok">已完成</td></tr>
+        <tr><td>Vision 离线识别多张人脸</td><td>FaceDetector.swift</td><td class="ok">已完成</td></tr>
+        <tr><td>自动贴 emoji 遮挡</td><td>EditorViewController.placeStickers</td><td class="ok">已完成</td></tr>
+        <tr><td>拖动 / 双指缩放 / 双指旋转</td><td>EditableItemView.swift</td><td class="ok">已完成</td></tr>
+        <tr><td>随机表情 / 自选表情面板</td><td>EditorToolbarView · EmojiPickerViewController</td><td class="ok">已完成</td></tr>
+        <tr><td>上传自定义表情包（存沙盒）</td><td>CustomStickerStore · 表情面板「我的贴纸」</td><td class="ok">已完成</td></tr>
+        <tr><td>自定义贴纸预览 / 删除</td><td>长按删除 · 设置页一键清空</td><td class="ok">已完成</td></tr>
+        <tr><td>文字水印（文字 / 颜色 / 字号）</td><td>TextWatermarkViewController</td><td class="ok">已完成</td></tr>
+        <tr><td>图片水印 / 多水印</td><td>EditorViewController.pickImageWatermark</td><td class="ok">已完成</td></tr>
+        <tr><td>水印与贴纸图层上下叠加</td><td>SelectedItemBar「上移 / 下移」</td><td class="ok">已完成</td></tr>
+        <tr><td>导出到相册 / 保留比例 / 压缩开关</td><td>EditorRenderer · PhotoLibraryService</td><td class="ok">已完成</td></tr>
+        <tr><td>设置：清除贴纸 / 隐私说明 / 版本</td><td>SettingsViewController · PrivacyViewController</td><td class="ok">已完成</td></tr>
+        <tr><td>深色 / 浅色模式适配</td><td>Theme.swift 全动态颜色</td><td class="ok">已完成</td></tr>
+        <tr><td>识别失败友好提示</td><td>弹窗「重试识别 / 手动加贴纸」兜底</td><td class="ok">已完成</td></tr>
+      </table>
+      <p style="margin-top:14px"><b>额外补充：</b>元素透明度调节、手动加贴纸（识别失败兜底）、重试识别、图层上移下移、删除按钮、首页三步使用引导。</p>
+    </div>
+  </section>
+
+  <footer>隐颜 FaceShy · Swift 5 + UIKit + Apple Vision · 26 个源文件全部代码均已在 <code>FaceShy/FaceShy/</code> 目录中</footer>
+</div>
+</body>
+</html>
