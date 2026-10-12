@@ -79,7 +79,14 @@ final class StickerCutoutService {
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
-            let output = self.performCutout(cgImage: cgImage, feather: feather)
+
+            // isSupported 只是运行时判断，编译器不认，这里必须再做一次
+            // #available 收窄，否则调用 iOS 17+ 的 performCutout 会编译报错
+            var output: UIImage?
+            if #available(iOS 17.0, *) {
+                output = self.performCutout(cgImage: cgImage, feather: feather)
+            }
+
             DispatchQueue.main.async {
                 if let masked = output {
                     completion(Result(image: masked, original: prepared))
