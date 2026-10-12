@@ -2,10 +2,10 @@
 //  EditorRenderer.swift
 //  FaceShy
 //
-//  导出渲染：把「照片 + 全部贴纸 / 水印」按原始分辨率合成成一张图片。
+//  导出渲染：把「照片 + 全部贴纸」按原始分辨率合成成一张图片。
 //
 //  几何一致性：编辑画布上的 canvasSize 与导出画布通过同一个缩放系数 k 换算，
-//  元素的位置 / 缩放 / 旋转 / 透明度完全复用模型数据，保证所见即所得。
+//  元素的位置 / 缩放 / 旋转 完全复用模型数据，保证所见即所得。
 //
 
 import UIKit
@@ -89,15 +89,6 @@ enum EditorRenderer {
             if let sticker = CustomStickerStore.shared.image(named: fileName) {
                 sticker.draw(in: aspectFitRect(content: sticker.size, in: rect))
             }
-
-        case .imageWatermark(let watermarkImage):
-            watermarkImage.draw(in: aspectFitRect(content: watermarkImage.size, in: rect))
-
-        case .textWatermark(let text, let color, let fontSize):
-            drawText(text,
-                     color: color,
-                     fontSize: fontSize * itemScale,
-                     in: rect)
         }
     }
 
@@ -109,27 +100,6 @@ enum EditorRenderer {
         let textSize = attributed.size()
         attributed.draw(at: CGPoint(x: rect.midX - textSize.width / 2,
                                     y: rect.midY - textSize.height / 2))
-    }
-
-    private static func drawText(_ text: String, color: UIColor, fontSize: CGFloat, in rect: CGRect) {
-        guard !text.isEmpty, rect.width > 1 else { return }
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .center
-        paragraph.lineBreakMode = .byWordWrapping
-
-        let attributed = NSAttributedString(string: text, attributes: [
-            .font: Theme.roundedFont(fontSize, weight: .bold),
-            .foregroundColor: color,
-            .paragraphStyle: paragraph
-        ])
-
-        let bounds = attributed.boundingRect(with: CGSize(width: rect.width, height: .greatestFiniteMagnitude),
-                                             options: [.usesLineFragmentOrigin, .usesFontLeading],
-                                             context: nil)
-        attributed.draw(in: CGRect(x: rect.minX,
-                                   y: rect.midY - bounds.height / 2,
-                                   width: rect.width,
-                                   height: ceil(bounds.height)))
     }
 
     /// 内容等比缩放后居中于指定矩形

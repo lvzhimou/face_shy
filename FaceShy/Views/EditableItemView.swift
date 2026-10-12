@@ -2,15 +2,15 @@
 //  EditableItemView.swift
 //  FaceShy
 //
-//  画布上的可交互元素视图：emoji 贴纸 / 自定义贴纸 / 文字水印 / 图片水印。
+//  画布上的可交互元素视图：emoji 贴纸 / 自定义贴纸。
 //
 //  手势：
 //  - 单指拖动  -> UIPanGestureRecognizer（平移 center）
 //  - 双指捏合  -> UIPinchGestureRecognizer（缩放）
 //  - 双指旋转  -> UIRotationGestureRecognizer（旋转，可与捏合同时进行）
-//  - 单击      -> 选中该元素，显示边框与删除按钮
+//  - 单击      -> 选中该元素，左上角出现「删除」，左下角出现「换表情」
 //
-//  为了在缩放时文字依然清晰，缩放不是通过 transform 实现，
+//  为了在缩放时 emoji 依然清晰，缩放不是通过 transform 实现，
 //  而是直接改变 bounds 并同步放大字号；transform 只用于旋转。
 //  这样在导出渲染时可以直接复用 baseSize * scale 的几何数据。
 //
@@ -23,7 +23,10 @@ protocol EditableItemViewDelegate: AnyObject {
                           didUpdateGeometry center: CGPoint,
                           scale: CGFloat,
                           rotation: CGFloat)
+    /// 点击左上角 ✕
     func editableItemViewDidRequestDelete(_ itemView: EditableItemView)
+    /// 点击左下角人脸图标，请求更换表情
+    func editableItemViewDidRequestReplace(_ itemView: EditableItemView)
 }
 
 final class EditableItemView: UIView {
@@ -40,9 +43,13 @@ final class EditableItemView: UIView {
     static let minScale: CGFloat = 0.2
     static let maxScale: CGFloat = 8
 
+    /// 圆形操作按钮直径
+    private let buttonSide: CGFloat = 30
+
     private var contentView: UIView?
     private var textLabel: UILabel?
     private let deleteButton = UIButton(type: .custom)
+    private let replaceButton = UIButton(type: .custom)
 
     private var panStartCenter: CGPoint = .zero
     private var pinchStartScale: CGFloat = 1
@@ -64,11 +71,11 @@ final class EditableItemView: UIView {
         backgroundColor = .clear
         clipsToBounds = false
         isUserInteractionEnabled = true
-        layer.cornerRadius = 6
+        layer.cornerRadius = 8
         layer.cornerCurve = .continuous
-        layer.borderColor = Theme.brand.cgColor
+        layer.borderColor = Theme.success.cgColor
 
-        setupDeleteButton()
+        setupActionButtons()
         rebuildContent()
         setupGestures()
 
@@ -108,23 +115,6 @@ final class EditableItemView: UIView {
             let imageView = UIImageView(image: CustomStickerStore.shared.image(named: fileName))
             imageView.contentMode = .scaleAspectFit
             view = imageView
-
-        case .imageWatermark(let image):
-            let imageView = UIImageView(image: image)
-            imageView.contentMode = .scaleAspectFit
-            view = imageView
-
-        case .textWatermark(let text, let color, _):
-            let label = UILabel()
-            label.text = text
-            label.textColor = color
-            label.textAlignment = .center
-            label.numberOfLines = 0
-            label.adjustsFontSizeToFitWidth = true
-            label.minimumScaleFactor = 0.4
-            label.baselineAdjustment = .alignCenters
-            textLabel = label
-            view = label
         }
 
         view.frame = bounds
@@ -136,23 +126,41 @@ final class EditableItemView: UIView {
         applyContentAppearance()
     }
 
-    /// 更换内容（随机表情 / 手动选择表情时调用）
-    func updateContent(_ newContent: ItemContent) {
+    /// 更换内容（换表情 / 选择自定义贴纸时调用）
+    func updateContent(_ newContent: ItemContent, animated: Bool = true) {
         content = newContent
         rebuildContent()
+        if animated { playContentPop() }
     }
 
-    /// 缩放变化时同步字号，保证文字清晰不模糊
+    /// 内容切换时的轻微弹跳，让「换表情」更有反馈
+    private func playContentPop() {
+        guard let contentView = contentView else { return }
+        contentView.transform = CGAffineTransform(scaleX: 0.72, y: 0.72)
+        contentView.alpha = 0.2
+        UIView.animate(withDuration: 0.34,
+                       delay: 0,
+                       usingSpringWithDamping: 0.62,
+                       initialSpringVelocity: 0.8,
+                       options: [.allowUserInteraction]) {
+            contentView.transform = .identity
+            contentView.alpha = 1
+        }
+    }
+
+    /// 贴纸刚被放下时的入场动画
+    func playAppearAnimation() {
+        playContentPop()
+    }
+
+    /// 缩放变化时同步字号，保证 emoji 清晰不模糊
     private func applyContentAppearance() {
         switch content {
         case .emoji:
             let side = min(baseSize.width, baseSize.height) * scaleFactor
             textLabel?.font = UIFont.systemFont(ofSize: max(side * 0.94, 6))
 
-        case .textWatermark(_, _, let fontSize):
-            textLabel?.font = Theme.roundedFont(max(fontSize * scaleFactor, 4), weight: .bold)
-
-        default:
+        case .customSticker:
             break
         }
     }
@@ -194,10 +202,6 @@ final class EditableItemView: UIView {
         apply(center: center, scale: scaleFactor, rotation: value, opacity: opacityValue, notify: true)
     }
 
-    func setOpacity(_ value: CGFloat) {
-        apply(center: center, scale: scaleFactor, rotation: rotationAngle, opacity: value, notify: false)
-    }
-
     /// 把元素放进指定区域（画布缩放时同步）
     func clampCenterToSuperview() {
         guard let container = superview else { return }
@@ -222,14 +226,26 @@ final class EditableItemView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // 删除按钮固定在右上角，跟随元素尺寸
-        let side: CGFloat = 26
-        deleteButton.frame = CGRect(x: bounds.width - side + 4,
-                                    y: -side + 4,
+
+        // ✕ 固定在左上角外侧，人脸图标固定在左下角外侧
+        let offset: CGFloat = 4
+        let side = buttonSide
+
+        deleteButton.frame = CGRect(x: -side / 2 - offset,
+                                    y: -side / 2 - offset,
                                     width: side,
                                     height: side)
-        // 选中高亮（圆角阴影描边）
-        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 6).cgPath
+
+        replaceButton.frame = CGRect(x: -side / 2 - offset,
+                                     y: bounds.height - side / 2 + offset,
+                                     width: side,
+                                     height: side)
+
+        // 按钮保持正立（不受元素旋转影响）
+        deleteButton.transform = transform.inverted()
+        replaceButton.transform = transform.inverted()
+
+        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 8).cgPath
     }
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -237,33 +253,66 @@ final class EditableItemView: UIView {
         updateChrome()
     }
 
+    /// 两个圆形按钮画在 bounds 之外，默认情况下 UIKit 不会把触摸派发给
+    /// 超出父视图范围的子视图，会导致按钮「看得见点不动」。
+    /// 这里把命中区域扩展到按钮所在矩形。
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        if super.point(inside: point, with: event) { return true }
+        guard isEditingItem else { return false }
+        return deleteButton.frame.contains(point) || replaceButton.frame.contains(point)
+    }
+
     // MARK: - 选中外观
 
-    private func setupDeleteButton() {
-        deleteButton.backgroundColor = Theme.danger
-        deleteButton.layer.cornerRadius = 13
-        deleteButton.layer.borderWidth = 1.5
-        deleteButton.layer.borderColor = UIColor.white.cgColor
-        deleteButton.layer.shadowColor = UIColor.black.cgColor
-        deleteButton.layer.shadowOpacity = 0.25
-        deleteButton.layer.shadowOffset = CGSize(width: 0, height: 1)
-        deleteButton.layer.shadowRadius = 2
-
-        let cross = UIImage(systemName: "xmark",
-                            withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .bold))?
-            .withTintColor(.white, renderingMode: .alwaysOriginal)
-        deleteButton.setImage(cross, for: .normal)
+    private func setupActionButtons() {
+        configureCircleButton(deleteButton,
+                              symbol: "xmark",
+                              symbolPointSize: 12,
+                              background: .white,
+                              tint: UIColor(white: 0.08, alpha: 1))
         deleteButton.addTarget(self, action: #selector(handleDeleteButton), for: .touchUpInside)
+
+        configureCircleButton(replaceButton,
+                              symbol: "face.smiling",
+                              symbolPointSize: 15,
+                              background: .white,
+                              tint: UIColor(white: 0.08, alpha: 1))
+        replaceButton.addTarget(self, action: #selector(handleReplaceButton), for: .touchUpInside)
+
         addSubview(deleteButton)
+        addSubview(replaceButton)
+    }
+
+    private func configureCircleButton(_ button: UIButton,
+                                       symbol: String,
+                                       symbolPointSize: CGFloat,
+                                       background: UIColor,
+                                       tint: UIColor) {
+        button.backgroundColor = background
+        button.layer.cornerRadius = buttonSide / 2
+        button.layer.borderWidth = 1.5
+        button.layer.borderColor = UIColor(white: 0.08, alpha: 0.9).cgColor
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.22
+        button.layer.shadowOffset = CGSize(width: 0, height: 1.5)
+        button.layer.shadowRadius = 3
+        button.clipsToBounds = false
+
+        let configuration = UIImage.SymbolConfiguration(pointSize: symbolPointSize, weight: .bold)
+        let image = UIImage(systemName: symbol, withConfiguration: configuration)?
+            .withTintColor(tint, renderingMode: .alwaysOriginal)
+        button.setImage(image, for: .normal)
     }
 
     private func updateChrome() {
-        layer.borderWidth = isEditingItem ? 2 : 0
-        layer.borderColor = Theme.brand.resolvedColor(with: traitCollection).cgColor
-        deleteButton.isHidden = !isEditingItem
-        layer.shadowColor = isEditingItem ? Theme.brand.resolvedColor(with: traitCollection).cgColor : nil
-        layer.shadowOpacity = isEditingItem ? 0.35 : 0
-        layer.shadowRadius = 8
+        let isEditing = isEditingItem
+        layer.borderWidth = isEditing ? 2 : 0
+        layer.borderColor = Theme.success.resolvedColor(with: traitCollection).cgColor
+        deleteButton.isHidden = !isEditing
+        replaceButton.isHidden = !isEditing
+        layer.shadowColor = isEditing ? Theme.success.resolvedColor(with: traitCollection).cgColor : nil
+        layer.shadowOpacity = isEditing ? 0.3 : 0
+        layer.shadowRadius = 10
         layer.shadowOffset = .zero
     }
 
@@ -345,6 +394,10 @@ final class EditableItemView: UIView {
         delegate?.editableItemViewDidRequestDelete(self)
     }
 
+    @objc private func handleReplaceButton() {
+        delegate?.editableItemViewDidRequestReplace(self)
+    }
+
     private func notifyGeometryChanged() {
         delegate?.editableItemView(self,
                                    didUpdateGeometry: center,
@@ -359,5 +412,12 @@ extension EditableItemView: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         true
+    }
+
+    /// 落在 ✕ / 人脸按钮上的触摸交给按钮自己处理，
+    /// 否则父视图的 tap 手势会把按钮的点击吞掉
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldReceive touch: UITouch) -> Bool {
+        !(touch.view is UIButton)
     }
 }

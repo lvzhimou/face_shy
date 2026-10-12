@@ -95,8 +95,14 @@ final class PhotoPicker: NSObject {
 extension PhotoPicker: PHPickerViewControllerDelegate {
 
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        picker.dismiss(animated: true)
+        // 等关闭动画彻底结束再回调：调用方通常会紧接着 present 下一个页面，
+        // 若此时上一个转场还没结束，UIKit 会丢弃新的 present。
+        picker.dismiss(animated: true) { [weak self] in
+            self?.handle(results)
+        }
+    }
 
+    private func handle(_ results: [PHPickerResult]) {
         guard let provider = results.first?.itemProvider,
               provider.canLoadObject(ofClass: UIImage.self) else {
             finish(with: nil)

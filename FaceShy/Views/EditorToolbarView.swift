@@ -2,7 +2,7 @@
 //  EditorToolbarView.swift
 //  FaceShy
 //
-//  编辑页底部工具栏：随机表情 / 表情库 / 上传贴纸 / 文字水印 / 图片水印 / 手动加贴纸
+//  编辑页底部工具栏：随机表情 / 表情库 / 上传贴纸 / 手动加贴纸
 //
 
 import UIKit
@@ -13,8 +13,6 @@ final class EditorToolbarView: UIView {
         case randomEmoji
         case openEmojiPicker
         case uploadCustomSticker
-        case addTextWatermark
-        case addImageWatermark
         case addManualSticker
     }
 
@@ -68,8 +66,6 @@ final class EditorToolbarView: UIView {
         addTool(symbol: "shuffle", title: "随机表情", action: .randomEmoji)
         addTool(symbol: "face.smiling", title: "表情库", action: .openEmojiPicker)
         addTool(symbol: "photo.on.rectangle.angled", title: "自定义贴纸", action: .uploadCustomSticker)
-        addTool(symbol: "textformat", title: "文字水印", action: .addTextWatermark)
-        addTool(symbol: "photo", title: "图片水印", action: .addImageWatermark)
         addTool(symbol: "plus.circle", title: "手动加贴纸", action: .addManualSticker)
     }
 

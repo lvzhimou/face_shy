@@ -77,16 +77,34 @@ final class CustomStickerStore {
     // MARK: - 写入
 
     /// 保存一张自定义贴纸，返回沙盒文件名
+    /// - 带透明通道（自动抠图结果）保存为 PNG 以保留透明背景
+    /// - 普通照片保存为 JPEG 以减小体积
     @discardableResult
     func addSticker(from image: UIImage) throws -> String {
         // 压缩尺寸 + 磨平方向
         let compressed = image.resized(maxDimension: maxStickerDimension).normalizedOrientation()
 
-        guard let data = compressed.jpegData(compressionQuality: 0.92) else {
+        // 注意：resized(to:) 用非不透明上下文重绘，产物一定带 alpha 通道，
+        // 所以「是否透明」必须看原图，否则普通照片也会被存成 PNG。
+        let hasAlpha: Bool = image.cgImage.map {
+            switch $0.alphaInfo {
+            case .none, .noneSkipFirst, .noneSkipLast: return false
+            default: return true
+            }
+        } ?? false
+
+        let data: Data
+        let fileName: String
+        if hasAlpha, let png = compressed.pngData() {
+            data = png
+            fileName = "sticker_\(UUID().uuidString).png"
+        } else if let jpeg = compressed.jpegData(compressionQuality: 0.92) {
+            data = jpeg
+            fileName = "sticker_\(UUID().uuidString).jpg"
+        } else {
             throw StickerStoreError.encodeFailed
         }
 
-        let fileName = "sticker_\(UUID().uuidString).jpg"
         try data.write(to: url(for: fileName), options: .atomic)
         return fileName
     }

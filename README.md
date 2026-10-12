@@ -158,7 +158,7 @@ FaceShy/
     │   └── AppNavigationController.swift  # 竖屏锁定 + 状态栏样式
     ├── Models/                         # 数据模型（纯数据，无 UI）
     │   ├── EditorItem.swift            #   ★ 画布元素模型（位置/缩放/旋转/透明度）
-    │   ├── EmojiCatalog.swift          #   内置 64 个遮脸 emoji
+    │   ├── EmojiCatalog.swift          #   内置 200+ 遮脸 emoji（4 个分组）
     │   └── AppSettings.swift           #   UserDefaults 轻量设置
     ├── Services/                       # 业务能力（可独立测试）
     │   ├── FaceDetector.swift          #   ★ Vision 本地人脸识别
@@ -167,16 +167,15 @@ FaceShy/
     │   ├── PhotoLibraryService.swift   #   相册保存 + PHPicker 选图
     │   └── CameraService.swift         #   相机拍照（权限申请）
     ├── Views/                          # 复用视图
-    │   ├── CanvasView.swift            #   ★ 编辑画布（等比展示 + 元素容器）
-    │   ├── EditableItemView.swift      #   ★ 拖动/缩放/旋转手势元素视图
+    │   ├── CanvasView.swift            #   ★ 编辑画布（等比展示 + 元素容器 + 扫描特效）
+    │   ├── EditableItemView.swift      #   ★ 拖动/缩放/旋转 + 删除/换表情按钮
     │   ├── EditorToolbarView.swift     #   底部工具栏
-    │   └── SelectedItemBar.swift       #   选中元素操作条（图层/透明度/删除）
+    │   └── ScanOverlayView.swift       #   本地 AI 扫描特效层
     ├── Controllers/                    # 页面
     │   ├── HomeViewController.swift        # 首页
     │   ├── EditorViewController.swift      # ★ 编辑页（核心编排）
-    │   ├── EmojiPickerViewController.swift # 表情面板 + 我的贴纸
-    │   ├── TextWatermarkViewController.swift # 文字水印面板
-    │   ├── OpacitySheetViewController.swift  # 透明度面板
+    │   ├── EmojiPickerViewController.swift # 表情面板（4 组 200+ 表情 + 我的贴纸）
+    │   ├── StickerCutoutViewController.swift # 抠图预览 / 羽化调整 / 保存
     │   ├── SettingsViewController.swift      # 设置
     │   └── PrivacyViewController.swift       # 隐私说明
     ├── Support/                        # 基础设施
@@ -186,10 +185,10 @@ FaceShy/
     │   └── HUD.swift                   # 加载指示器 + Toast
     └── Resources/
         ├── Info.plist                  # 权限文案、Scene 配置、竖屏锁定
-        └── Assets.xcassets             # AppIcon + AccentColor
+        └── Assets.xcassets             # AppIcon（新图标）+ AccentColor
 ```
 
-26 个 Swift 文件，约 3600 行，按「模型 / 服务 / 视图 / 控制器」分层，UI 与业务解耦。
+27 个 Swift 文件，约 4200 行，按「模型 / 服务 / 视图 / 控制器」分层，UI 与业务解耦。
 
 ---
 
@@ -270,26 +269,29 @@ App 内**没有任何网络请求代码**，可开飞行模式全功能使用。
 | --- | --- | --- |
 | 相册选图 / 相机拍照导入 | HomeViewController + PhotoPicker / CameraService | ✅ |
 | Vision 离线人脸识别 | FaceDetector.swift | ✅ |
-| 多人脸自动贴 emoji | EditorViewController.placeStickers | ✅ |
+| 导入时的本地扫描特效 | ScanOverlayView（光带往复 + 网格 + 取景框） | ✅ |
+| 多人脸自动贴 emoji（带入场动画） | EditorViewController.placeStickers | ✅ |
 | 单指拖动 / 双指缩放 / 双指旋转 | EditableItemView.swift | ✅ |
+| 点击贴纸 → ✕ 删除 | EditableItemView 左上角按钮 | ✅ |
+| 点击贴纸 → 人脸图标换表情 | EditableItemView 左下角按钮 → 表情面板 | ✅ |
 | 随机表情按钮 | toolbar → randomizeFaceStickers | ✅ |
-| 自选表情面板 | EmojiPickerViewController（系统 emoji 64 个） | ✅ |
+| 表情库分组（基础脸 / 高级脸 1-3，共 200+） | EmojiCatalog + EmojiPickerViewController | ✅ |
 | 上传自定义表情包（存沙盒） | CustomStickerStore + 表情面板「我的贴纸」 | ✅ |
+| 自定义贴纸本地自动抠图（iOS 17+） | StickerCutoutService（Vision 前景分割） | ✅ |
+| 抠图预览 / 原图对比 / 边缘羽化调节 | StickerCutoutViewController | ✅ |
 | 自定义贴纸预览 / 删除 | 长按贴纸 → 删除；设置页可一键清空 | ✅ |
-| 文字水印（文字 / 颜色 / 字号） | TextWatermarkViewController | ✅ |
-| 图片水印（相册选图） | EditorViewController.pickImageWatermark | ✅ |
-| 水印拖动 / 缩放 / 旋转 / 多水印 | 同为 EditableItemView | ✅ |
-| 水印与贴纸图层上下叠加 | SelectedItemBar「上移 / 下移」 | ✅ |
-| 选中并删除水印 | 删除按钮 / 操作条删除 | ✅ |
 | 导出保存到相册，保留原图比例 | EditorRenderer + PhotoLibraryService | ✅ |
 | 可选压缩开关（默认高清） | 保存时的画质选择 + AppSettings 记忆 | ✅ |
 | 设置页：清除自定义贴纸 | SettingsViewController | ✅ |
 | 设置页：隐私说明 | PrivacyViewController | ✅ |
 | 设置页：版本信息 | SettingsViewController | ✅ |
 | 深色 / 浅色适配 | Theme.swift 全动态颜色 | ✅ |
-| 识别失败友好提示 | presentNoFaceAlert（可重试 / 手动加贴纸） | ✅ |
+| 识别失败友好提示 | presentNoFaceAlert（可重扫 / 手动加贴纸） | ✅ |
 | 超大贴纸自动压缩防崩溃 | CustomStickerStore 压到最长边 512px | ✅ |
 | 权限被拒友好提示 | CameraService / PhotoLibraryService 引导去设置 | ✅ |
+
+> 说明：按最新需求，文字水印与图片水印功能已移除；抠图依赖的
+> `VNGenerateForegroundInstanceMaskRequest` 仅 iOS 17+ 可用，iOS 16 设备会自动降级为保存原图。
 
 **额外补充的小功能**：元素透明度调节、"手动加贴纸"（识别失败兜底）、重试识别、图层上移下移、删除按钮，以及首页的三步使用引导。
 

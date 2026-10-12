@@ -2,13 +2,13 @@
 //  EditorViewController.swift
 //  FaceShy
 //
-//  编辑页：人脸识别 -> 自动贴 emoji -> 手势调整 -> 水印 -> 保存
+//  编辑页：扫描特效 -> 人脸识别 -> 自动贴 emoji -> 手势调整 -> 保存
 //
 //  数据流：
 //  Vision 检测结果（归一化坐标）
 //      -> canvasRect() 换算到画布坐标系
 //      -> 创建 EditorItem（模型）
-//      -> EditableItemView（视图）承载手势
+//      -> EditableItemView（视图）承载手势与「删除 / 换表情」按钮
 //      -> EditorRenderer 用模型数据在原始分辨率下重绘导出
 //
 
@@ -20,8 +20,6 @@ final class EditorViewController: UIViewController {
 
     private let sourceImage: UIImage
     private let faceDetector = FaceDetector()
-    private let stickerStore = CustomStickerStore.shared
-    private lazy var photoPicker = PhotoPicker()
 
     // MARK: - State
 
@@ -33,11 +31,14 @@ final class EditorViewController: UIViewController {
     private var didRunInitialDetection = false
     private var lastCanvasSize: CGSize = .zero
 
+    /// 扫描特效的最短展示时长，太快会一闪而过看不出效果
+    private let minimumScanDuration: CFTimeInterval = 1.5
+
     // MARK: - Views
 
     private let canvasView = CanvasView()
-    private let selectedBar = SelectedItemBar()
     private let toolbar = EditorToolbarView()
+    private let statusPill = UILabel()
 
     // MARK: - Init
 
@@ -68,7 +69,7 @@ final class EditorViewController: UIViewController {
         guard !didRunInitialDetection else { return }
         didRunInitialDetection = true
         view.layoutIfNeeded()
-        detectFacesAndPlaceStickers(isInitial: true)
+        detectFacesAndPlaceStickers()
     }
 
     override func viewDidLayoutSubviews() {
@@ -84,6 +85,7 @@ final class EditorViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        canvasView.stopScanAnimation()
         HUD.shared.hide()
     }
 
@@ -108,15 +110,20 @@ final class EditorViewController: UIViewController {
     }
 
     private func setupLayout() {
-        // 选中操作条以浮层形式压在画布上方，避免挤压照片导致元素位置重算
-        selectedBar.isHidden = true
-        selectedBar.roundCorners(radius: 16)
-
         // 覆盖 Home Indicator 区域的背景
         let bottomFiller = UIView()
         bottomFiller.backgroundColor = Theme.surface
 
-        view.addSubviews(canvasView, toolbar, selectedBar, bottomFiller)
+        statusPill.font = Theme.font(12, weight: .medium)
+        statusPill.textColor = Theme.textSecondary
+        statusPill.backgroundColor = Theme.surface
+        statusPill.textAlignment = .center
+        statusPill.layer.cornerRadius = 12
+        statusPill.layer.cornerCurve = .continuous
+        statusPill.clipsToBounds = true
+        statusPill.isHidden = true
+
+        view.addSubviews(canvasView, statusPill, toolbar, bottomFiller)
 
         NSLayoutConstraint.activate([
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -134,10 +141,9 @@ final class EditorViewController: UIViewController {
             canvasView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             canvasView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
 
-            selectedBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            selectedBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            selectedBar.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -10),
-            selectedBar.heightAnchor.constraint(equalToConstant: 48)
+            statusPill.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            statusPill.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -10),
+            statusPill.heightAnchor.constraint(equalToConstant: 26)
         ])
     }
 
@@ -145,34 +151,45 @@ final class EditorViewController: UIViewController {
         toolbar.onAction = { [weak self] action in
             self?.handleToolbarAction(action)
         }
-        selectedBar.onAction = { [weak self] action in
-            self?.handleSelectedBarAction(action)
-        }
         canvasView.onTapEmptyArea = { [weak self] in
             self?.deselect()
         }
     }
 
-    // MARK: - 人脸识别
+    // MARK: - 人脸识别（带扫描特效）
 
-    private func detectFacesAndPlaceStickers(isInitial: Bool) {
-        HUD.shared.show("本地 AI 正在识别人脸…", in: view)
+    private func detectFacesAndPlaceStickers() {
+        canvasView.startScanAnimation()
+        HUD.shared.show("本地 AI 正在扫描照片…", in: view)
+        updateStatusPill("正在本地扫描人脸…")
+
+        let beginTime = CACurrentMediaTime()
 
         faceDetector.detectFaces(in: sourceImage) { [weak self] result in
             guard let self = self else { return }
-            HUD.shared.hide()
 
-            switch result {
-            case .success(let faces):
-                guard !faces.isEmpty else {
-                    self.presentNoFaceAlert()
-                    return
+            // 识别通常只要几百毫秒，强制让扫描动画至少跑够时长，特效才看得出来
+            let elapsed = CACurrentMediaTime() - beginTime
+            let remaining = max(0, self.minimumScanDuration - elapsed)
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + remaining) {
+                self.canvasView.stopScanAnimation()
+                HUD.shared.hide()
+
+                switch result {
+                case .success(let faces):
+                    guard !faces.isEmpty else {
+                        self.updateStatusPill(nil)
+                        self.presentNoFaceAlert()
+                        return
+                    }
+                    self.placeStickers(for: faces)
+
+                case .failure(let error):
+                    self.updateStatusPill(nil)
+                    self.presentAlert(title: "识别失败",
+                                      message: error.errorDescription ?? "请稍后重试")
                 }
-                self.placeStickers(for: faces)
-
-            case .failure(let error):
-                self.presentAlert(title: "识别失败",
-                                  message: error.errorDescription ?? "请稍后重试")
             }
         }
     }
@@ -197,10 +214,21 @@ final class EditorViewController: UIViewController {
                                   center: CGPoint(x: expanded.midX, y: expanded.midY),
                                   baseSize: expanded.size,
                                   rotation: -face.roll)
-            addItem(item, select: false)
+
+            // 逐个落下，形成轻微的错位节奏感
+            if let view = addItem(item, select: false, animated: true) {
+                view.alpha = 0
+                view.playAppearAnimation()
+                UIView.animate(withDuration: 0.2,
+                               delay: Double(index) * 0.06,
+                               options: [.allowUserInteraction]) {
+                    view.alpha = 1
+                }
+            }
         }
 
-        Toast.show("识别到 \(faces.count) 张人脸，已自动贴上表情", in: view)
+        updateStatusPill("识别到 \(faces.count) 张人脸")
+        Toast.show("已自动贴上 \(faces.count) 个表情，点击可更换", in: view)
     }
 
     /// Vision 归一化坐标（原点左下）-> 画布坐标（原点左上）
@@ -215,11 +243,11 @@ final class EditorViewController: UIViewController {
     private func presentNoFaceAlert() {
         let alert = UIAlertController(
             title: "没有识别到人脸",
-            message: "可能是光线较暗、侧脸，或面部被头发 / 口罩遮挡。你可以换一张照片，也可以用「手动加贴纸」自己把表情拖到脸上。",
+            message: "可能是光线较暗、侧脸，或面部被头发 / 口罩遮挡。你可以重新扫描，也可以用「手动加贴纸」自己把表情拖到脸上。",
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "重试识别", style: .default) { [weak self] _ in
-            self?.detectFacesAndPlaceStickers(isInitial: false)
+        alert.addAction(UIAlertAction(title: "重新扫描", style: .default) { [weak self] _ in
+            self?.detectFacesAndPlaceStickers()
         })
         alert.addAction(UIAlertAction(title: "手动加贴纸", style: .default) { [weak self] _ in
             self?.addManualSticker()
@@ -228,14 +256,26 @@ final class EditorViewController: UIViewController {
         present(alert, animated: true)
     }
 
+    private func updateStatusPill(_ text: String?) {
+        guard let text = text, !text.isEmpty else {
+            statusPill.isHidden = true
+            return
+        }
+        statusPill.text = "  \(text)  "
+        statusPill.isHidden = false
+    }
+
     // MARK: - 元素管理
 
-    private func addItem(_ item: EditorItem, select shouldSelect: Bool) {
+    @discardableResult
+    private func addItem(_ item: EditorItem, select shouldSelect: Bool, animated: Bool = false) -> EditableItemView? {
         items.append(item)
 
         let itemView = EditableItemView(item: item)
         itemView.delegate = self
         canvasView.photoContainer.addSubview(itemView)
+        // 扫描特效层始终压在贴纸之上（识别期间贴纸不会出现，保持层级稳定）
+        canvasView.photoContainer.bringSubviewToFront(canvasView.scanOverlay)
         itemViews[item.id] = itemView
 
         if shouldSelect {
@@ -243,6 +283,7 @@ final class EditorViewController: UIViewController {
         } else {
             itemView.isEditingItem = false
         }
+        return itemView
     }
 
     private func removeItems(where predicate: (EditorItem) -> Bool) {
@@ -258,26 +299,20 @@ final class EditorViewController: UIViewController {
     }
 
     private func selectItem(id: UUID) {
-        guard let item = items.first(where: { $0.id == id }) else { return }
         selectedItemID = id
         itemViews.forEach { $0.value.isEditingItem = ($0.key == id) }
-        selectedBar.update(title: item.displayName)
-        selectedBar.isHidden = false
     }
 
     private func deselect() {
         selectedItemID = nil
         itemViews.forEach { $0.value.isEditingItem = false }
-        selectedBar.isHidden = true
     }
 
-    private func deleteSelectedItem() {
-        guard let id = selectedItemID else { return }
+    private func deleteItem(id: UUID) {
         itemViews[id]?.removeFromSuperview()
         itemViews.removeValue(forKey: id)
         items.removeAll { $0.id == id }
-        deselect()
-        Toast.show("已删除", in: view)
+        if selectedItemID == id { deselect() }
     }
 
     /// 按当前图层顺序（视图层级）返回元素模型，用于导出绘制
@@ -294,55 +329,62 @@ final class EditorViewController: UIViewController {
         case .randomEmoji:
             randomizeFaceStickers()
         case .openEmojiPicker:
-            presentEmojiPicker()
+            presentEmojiPicker(isReplacing: false)
         case .uploadCustomSticker:
             uploadCustomSticker()
-        case .addTextWatermark:
-            presentTextWatermark()
-        case .addImageWatermark:
-            pickImageWatermark()
         case .addManualSticker:
             addManualSticker()
         }
     }
 
-    /// 一键随机更换全部人脸贴纸
+    /// 一键随机更换全部表情（人脸贴纸优先，没有则换全部）
     private func randomizeFaceStickers() {
-        let faceItems = items.filter { $0.role == .faceSticker }
-        guard !faceItems.isEmpty else {
-            Toast.show("还没有人脸贴纸，可用「手动加贴纸」添加", in: view)
+        let targets = items.filter { $0.role == .faceSticker }.isEmpty
+            ? items
+            : items.filter { $0.role == .faceSticker }
+
+        guard !targets.isEmpty else {
+            Toast.show("还没有贴纸，可用「手动加贴纸」添加一个", in: view)
             return
         }
 
-        let emojis = EmojiCatalog.randomSet(count: faceItems.count)
-        for (index, item) in faceItems.enumerated() {
+        let emojis = EmojiCatalog.randomSet(count: targets.count)
+        for (index, item) in targets.enumerated() {
             let content = ItemContent.emoji(emojis[index % emojis.count])
             item.content = content
             itemViews[item.id]?.updateContent(content)
         }
-
-        if let id = selectedItemID, let item = items.first(where: { $0.id == id }) {
-            selectedBar.update(title: item.displayName)
-        }
-        Toast.show("已随机更换 \(faceItems.count) 个表情", in: view)
+        Toast.show("已随机更换 \(targets.count) 个表情", in: view)
     }
 
-    private func presentEmojiPicker() {
+    /// - Parameter isReplacing: 是否由「换表情」入口触发（只换当前选中的那个）
+    private func presentEmojiPicker(isReplacing: Bool) {
         let picker = EmojiPickerViewController()
+        picker.isReplacingItem = isReplacing
         picker.onPick = { [weak self] content in
-            self?.applyStickerContent(content)
+            guard let self = self else { return }
+            // 换表情入口：只替换当前选中的贴纸
+            if isReplacing, let id = self.selectedItemID {
+                self.applyContent(content, toItemID: id)
+            } else {
+                self.applyStickerContent(content)
+            }
         }
         present(picker, animated: true)
     }
 
+    /// 把内容应用到指定贴纸
+    private func applyContent(_ content: ItemContent, toItemID id: UUID) {
+        guard let item = items.first(where: { $0.id == id }) else { return }
+        item.content = content
+        itemViews[id]?.updateContent(content)
+        selectItem(id: id)
+    }
+
     /// 选中了贴纸就只换它，否则替换全部人脸贴纸
     private func applyStickerContent(_ content: ItemContent) {
-        if let id = selectedItemID,
-           let item = items.first(where: { $0.id == id }),
-           item.isSticker {
-            item.content = content
-            itemViews[id]?.updateContent(content)
-            selectedBar.update(title: item.displayName)
+        if let id = selectedItemID, items.contains(where: { $0.id == id }) {
+            applyContent(content, toItemID: id)
             return
         }
 
@@ -369,111 +411,18 @@ final class EditorViewController: UIViewController {
                               role: .free,
                               center: CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2),
                               baseSize: CGSize(width: side, height: side))
-        addItem(item, select: true)
+        if let view = addItem(item, select: true, animated: true) {
+            view.playAppearAnimation()
+        }
         Toast.show("拖动贴纸移到脸上，双指可缩放旋转", in: view)
     }
 
+    /// 上传自定义贴纸：先本地自动抠图，用户选择保存抠图或原图
     private func uploadCustomSticker() {
-        photoPicker.present(from: self) { [weak self] image in
-            guard let self = self, let image = image else { return }
-            do {
-                let fileName = try self.stickerStore.addSticker(from: image)
-                self.addManualSticker(content: .customSticker(fileName: fileName))
-                Toast.show("已加入画布，并保存到「我的贴纸」", in: self.view)
-            } catch {
-                self.presentAlert(title: "保存失败", message: error.localizedDescription)
-            }
-        }
-    }
-
-    // MARK: - 水印
-
-    private func presentTextWatermark() {
-        let controller = TextWatermarkViewController()
-        controller.onConfirm = { [weak self] text, color, fontSize in
-            self?.addTextWatermark(text: text, color: color, fontSize: fontSize)
-        }
-        present(controller, animated: true)
-    }
-
-    private func addTextWatermark(text: String, color: UIColor, fontSize: CGFloat) {
-        let canvasSize = canvasView.canvasSize
-        guard canvasSize.width > 0 else { return }
-
-        let maxWidth = canvasSize.width * 0.82
-        let attributed = NSAttributedString(string: text,
-                                            attributes: [.font: Theme.roundedFont(fontSize, weight: .bold)])
-        let measured = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude),
-                                               options: [.usesLineFragmentOrigin, .usesFontLeading],
-                                               context: nil).size
-
-        let baseSize = CGSize(width: min(ceil(measured.width) + 24, maxWidth),
-                              height: ceil(measured.height) + 16)
-
-        let item = EditorItem(content: .textWatermark(text: text, color: color, fontSize: fontSize),
-                              role: .free,
-                              center: CGPoint(x: canvasSize.width / 2,
-                                              y: canvasSize.height - baseSize.height / 2 - 28),
-                              baseSize: baseSize)
-        addItem(item, select: true)
-    }
-
-    private func pickImageWatermark() {
-        photoPicker.present(from: self) { [weak self] image in
-            guard let self = self, let image = image else { return }
-            self.addImageWatermark(image)
-        }
-    }
-
-    private func addImageWatermark(_ image: UIImage) {
-        let canvasSize = canvasView.canvasSize
-        guard canvasSize.width > 0 else { return }
-
-        let maxSide = min(canvasSize.width * 0.6, 260)
-        let ratio = image.size.width / max(image.size.height, 1)
-        let baseSize: CGSize = ratio >= 1
-            ? CGSize(width: maxSide, height: maxSide / ratio)
-            : CGSize(width: maxSide * ratio, height: maxSide)
-
-        let item = EditorItem(content: .imageWatermark(image),
-                              role: .free,
-                              center: CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2),
-                              baseSize: baseSize)
-        addItem(item, select: true)
-        Toast.show("双指缩放旋转，单指拖动调整水印位置", in: view)
-    }
-
-    // MARK: - 选中操作条
-
-    private func handleSelectedBarAction(_ action: SelectedItemBar.Action) {
-        guard let id = selectedItemID,
-              let itemView = itemViews[id],
-              let container = itemView.superview else { return }
-
-        switch action {
-        case .layerUp:
-            let subviews = container.subviews
-            if let index = subviews.firstIndex(of: itemView), index < subviews.count - 1 {
-                container.exchangeSubview(at: index, withSubviewAt: index + 1)
-            }
-
-        case .layerDown:
-            // index 0 是照片本身，元素最低只能到 index 1
-            let subviews = container.subviews
-            if let index = subviews.firstIndex(of: itemView), index > 1 {
-                container.exchangeSubview(at: index, withSubviewAt: index - 1)
-            }
-
-        case .opacity:
-            let sheet = OpacitySheetViewController(current: itemView.opacityValue)
-            sheet.onConfirm = { [weak self] value in
-                itemView.setOpacity(value)
-                self?.items.first(where: { $0.id == id })?.opacity = value
-            }
-            present(sheet, animated: true)
-
-        case .delete:
-            deleteSelectedItem()
+        StickerUploadFlow.start(from: self) { [weak self] fileName in
+            guard let self = self else { return }
+            self.addManualSticker(content: .customSticker(fileName: fileName))
+            Toast.show("已加入画布，并保存到「我的贴纸」", in: self.view)
         }
     }
 
@@ -564,7 +513,12 @@ extension EditorViewController: EditableItemViewDelegate {
     }
 
     func editableItemViewDidRequestDelete(_ itemView: EditableItemView) {
+        deleteItem(id: itemView.itemID)
+        Toast.show("已删除", in: view)
+    }
+
+    func editableItemViewDidRequestReplace(_ itemView: EditableItemView) {
         selectItem(id: itemView.itemID)
-        deleteSelectedItem()
+        presentEmojiPicker(isReplacing: true)
     }
 }

@@ -2,7 +2,7 @@
 //  EditorItem.swift
 //  FaceShy
 //
-//  画布上的一个可编辑元素（emoji 贴纸 / 自定义贴纸 / 文字水印 / 图片水印）。
+//  画布上的一个可编辑元素（emoji 贴纸 / 自定义贴纸）。
 //
 //  几何模型说明：
 //  - baseSize：元素「未缩放」时在画布上的尺寸（画布坐标系 = point）
@@ -25,12 +25,8 @@ enum ItemRole {
 enum ItemContent {
     /// 系统 emoji
     case emoji(String)
-    /// 用户上传的自定义贴纸（沙盒文件名）
+    /// 用户上传的自定义贴纸（沙盒文件名，可能为带透明通道的抠图 PNG）
     case customSticker(fileName: String)
-    /// 图片水印（内存中的图片对象）
-    case imageWatermark(UIImage)
-    /// 文字水印
-    case textWatermark(text: String, color: UIColor, fontSize: CGFloat)
 }
 
 final class EditorItem {
@@ -46,7 +42,7 @@ final class EditorItem {
     var scale: CGFloat
     /// 旋转弧度
     var rotation: CGFloat
-    /// 不透明度
+    /// 不透明度（预留字段，当前界面不暴露调节入口）
     var opacity: CGFloat
     /// 未缩放的基准尺寸
     var baseSize: CGSize
@@ -67,21 +63,18 @@ final class EditorItem {
         self.opacity = opacity
     }
 
-    /// 元素名称（用于选中状态栏展示）
+    /// 元素名称（用于提示文案展示）
     var displayName: String {
         switch content {
         case .emoji: return "表情贴纸"
         case .customSticker: return "自定义贴纸"
-        case .imageWatermark: return "图片水印"
-        case .textWatermark: return "文字水印"
         }
     }
 
-    /// 是否是可以替换表情的类型
+    /// 是否是可以替换表情的类型（当前所有元素都是）
     var isSticker: Bool {
         switch content {
         case .emoji, .customSticker: return true
-        case .imageWatermark, .textWatermark: return false
         }
     }
 }

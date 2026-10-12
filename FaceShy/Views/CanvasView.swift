@@ -13,8 +13,11 @@ import UIKit
 
 final class CanvasView: UIView {
 
-    /// 贴纸 / 水印的父视图（clipsToBounds = true，超出照片的部分会被裁掉）
+    /// 贴纸的父视图（clipsToBounds = true，超出照片的部分会被裁掉）
     let photoContainer = UIView()
+
+    /// 本地 AI 识别中的扫描特效层
+    let scanOverlay = ScanOverlayView()
 
     /// 点击空白处（用于取消选中当前元素）
     var onTapEmptyArea: (() -> Void)?
@@ -49,6 +52,8 @@ final class CanvasView: UIView {
 
         addSubview(photoContainer)
         photoContainer.addSubview(imageView)
+        photoContainer.addSubview(scanOverlay)
+        scanOverlay.isHidden = true
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         tap.delegate = self
@@ -81,6 +86,16 @@ final class CanvasView: UIView {
         if imageView.frame != photoContainer.bounds {
             imageView.frame = photoContainer.bounds
         }
+        scanOverlay.frame = photoContainer.bounds
+    }
+
+    /// 开始 / 停止扫描特效
+    func startScanAnimation() {
+        scanOverlay.startScanning()
+    }
+
+    func stopScanAnimation() {
+        scanOverlay.stopScanning()
     }
 
     /// 画布尺寸变化时（例如旋转 / 分屏），按比例同步已有元素的位置与大小
