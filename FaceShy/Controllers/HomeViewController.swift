@@ -193,7 +193,7 @@ final class HomeViewController: UIViewController {
     private func makeEntryRow() -> UIView {
         let row = UIStackView(arrangedSubviews: [
             makeEntryButton(title: "相册选图",
-                            subtitle: "多人合照一次搞定",
+                            subtitle: "人脸一键遮挡",
                             symbol: "photo.on.rectangle.angled",
                             selector: #selector(pickFromLibrary)),
             makeEntryButton(title: "拍照导入",
