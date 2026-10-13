@@ -25,6 +25,10 @@ final class HomeViewController: UIViewController {
         navigationItem.backButtonDisplayMode = .minimal
         navigationItem.rightBarButtonItem = makeSettingsBarItem()
         buildUI()
+        #if DEBUG
+        installDebugLogButton()
+        DebugLog.step("首页加载完成")
+        #endif
     }
 
     // MARK: - UI
@@ -134,10 +138,11 @@ final class HomeViewController: UIViewController {
 
     // MARK: - 主视觉卡（渐变横幅）
 
+    /// 纯展示卡：不开交互，避免与下面真正的入口按钮抢「可点」的视觉语义
     private func makeHeroBanner() -> UIView {
-        let card = GradientCardView(light: (0x6C5CF0, 0x4B3ED8),
-                                    dark: (0x7B6CFF, 0x5446E0))
+        let card = HeroBannerView()
         card.roundCorners(radius: 24)
+        card.isUserInteractionEnabled = false
 
         let pill = makeCapsule(text: "🔒 全程本机运行 · 不上传照片")
 
@@ -196,26 +201,18 @@ final class HomeViewController: UIViewController {
         return capsule
     }
 
-    // MARK: - 双入口卡
+    // MARK: - 双入口卡（首页唯一可点的功能按钮，视觉上要一眼看出来）
 
     private func makeEntryRow() -> UIView {
         let row = UIStackView(arrangedSubviews: [
-            makeEntryCard(light: (0xEDEAFF, 0xDCD4FB),
-                          dark: (0x2C2652, 0x211D40),
-                          symbol: "photo.on.rectangle.angled",
-                          title: "相册选图",
-                          subtitle: "多人合照一次搞定",
-                          badge: "GO",
-                          accent: Theme.brand,
-                          selector: #selector(pickFromLibrary)),
-            makeEntryCard(light: (0xE0F5EA, 0xC9EED9),
-                          dark: (0x1D352B, 0x16281F),
-                          symbol: "camera.fill",
-                          title: "拍照导入",
-                          subtitle: CameraService.isCameraAvailable ? "拍完立刻遮脸" : "请用相册选图",
-                          badge: nil,
-                          accent: Theme.success,
-                          selector: #selector(takePhoto))
+            makeEntryButton(title: "相册选图",
+                            subtitle: "多人合照一次搞定",
+                            symbol: "photo.on.rectangle.angled",
+                            selector: #selector(pickFromLibrary)),
+            makeEntryButton(title: "拍照导入",
+                            subtitle: CameraService.isCameraAvailable ? "拍完立刻遮脸" : "请用相册选图",
+                            symbol: "camera.fill",
+                            selector: #selector(takePhoto))
         ])
         row.axis = .horizontal
         row.spacing = 12
@@ -223,88 +220,80 @@ final class HomeViewController: UIViewController {
         return row
     }
 
-    private func makeEntryCard(light: (UInt32, UInt32),
-                               dark: (UInt32, UInt32),
-                               symbol: String,
-                               title: String,
-                               subtitle: String,
-                               badge: String?,
-                               accent: UIColor,
-                               selector: Selector) -> UIControl {
-        let container = UIControl()
-        let card = GradientCardView(light: light, dark: dark)
-        card.roundCorners(radius: 22)
-        container.addSubviews(card)
-        card.pinEdges(to: container)
-
-        container.addTarget(self, action: #selector(entryCardTapped), for: .touchUpInside)
-        container.addTarget(self, action: selector, for: .touchUpInside)
+    /// 实心品牌色主按钮卡：整块可点，带阴影 + 右侧箭头，明确传达「这里能点」
+    private func makeEntryButton(title: String,
+                                 subtitle: String,
+                                 symbol: String,
+                                 selector: Selector) -> UIButton {
+        let button = EntryCardButton(type: .custom)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: selector, for: .touchUpInside)
+        button.addTarget(self, action: #selector(entryCardTapped), for: .touchUpInside)
 
         let icon = UIImageView(image: UIImage(systemName: symbol,
-                                              withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold)))
-        icon.tintColor = accent
+                                              withConfiguration: UIImage.SymbolConfiguration(pointSize: 22, weight: .semibold)))
+        icon.tintColor = .white
         icon.contentMode = .center
+        icon.isUserInteractionEnabled = false
 
         let iconTile = UIView()
-        iconTile.backgroundColor = UIColor.white.withAlphaComponent(0.62)
+        iconTile.backgroundColor = UIColor.white.withAlphaComponent(0.22)
         iconTile.roundCorners(radius: 14)
+        iconTile.isUserInteractionEnabled = false
         iconTile.addSubviews(icon)
 
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = Theme.roundedFont(17, weight: .bold)
-        titleLabel.textColor = Theme.textPrimary
+        titleLabel.font = Theme.roundedFont(18, weight: .bold)
+        titleLabel.textColor = .white
+        titleLabel.isUserInteractionEnabled = false
 
         let subtitleLabel = UILabel()
         subtitleLabel.text = subtitle
-        subtitleLabel.font = Theme.font(12)
-        subtitleLabel.textColor = Theme.textSecondary
+        subtitleLabel.font = Theme.font(12, weight: .medium)
+        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.82)
         subtitleLabel.numberOfLines = 0
+        subtitleLabel.isUserInteractionEnabled = false
 
-        let stack = UIStackView(arrangedSubviews: [iconTile, titleLabel, subtitleLabel])
-        stack.axis = .vertical
-        stack.spacing = 4
-        stack.alignment = .leading
-        stack.setCustomSpacing(10, after: iconTile)
-        stack.setCustomSpacing(2, after: titleLabel)
-        stack.translatesAutoresizingMaskIntoConstraints = false
+        let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 3
+        textStack.alignment = .leading
+        textStack.isUserInteractionEnabled = false
 
-        container.addSubviews(stack)
+        let arrow = UIImageView(image: UIImage(systemName: "chevron.right",
+                                               withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)))
+        arrow.tintColor = UIColor.white.withAlphaComponent(0.75)
+        arrow.contentMode = .center
+        arrow.isUserInteractionEnabled = false
+
+        // 整卡内边距 16：图标 + 文案 + 箭头，垂直居中
+        let content = UIStackView(arrangedSubviews: [iconTile, textStack, arrow])
+        content.axis = .horizontal
+        content.spacing = 10
+        content.alignment = .center
+        content.isUserInteractionEnabled = false
+        content.translatesAutoresizingMaskIntoConstraints = false
+
+        button.addSubviews(content)
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalToConstant: 148),
+            button.heightAnchor.constraint(equalToConstant: 118),
 
-            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -12),
+            content.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 16),
+            content.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12),
+            content.centerYAnchor.constraint(equalTo: button.centerYAnchor),
 
             iconTile.widthAnchor.constraint(equalToConstant: 42),
             iconTile.heightAnchor.constraint(equalToConstant: 42),
             icon.widthAnchor.constraint(equalToConstant: 24),
             icon.heightAnchor.constraint(equalToConstant: 24),
             icon.centerXAnchor.constraint(equalTo: iconTile.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: iconTile.centerYAnchor)
+            icon.centerYAnchor.constraint(equalTo: iconTile.centerYAnchor),
+
+            arrow.widthAnchor.constraint(equalToConstant: 14),
+            arrow.heightAnchor.constraint(equalToConstant: 14)
         ])
-
-        if let badge = badge {
-            let badgeLabel = UILabel()
-            badgeLabel.text = badge
-            badgeLabel.font = Theme.roundedFont(14, weight: .bold)
-            badgeLabel.textColor = accent
-
-            let badgeView = UIView()
-            badgeView.backgroundColor = UIColor.white.withAlphaComponent(0.78)
-            badgeView.roundCorners(radius: 14)
-            badgeView.addSubviews(badgeLabel)
-            badgeLabel.pinEdges(to: badgeView, insets: UIEdgeInsets(top: 5, left: 14, bottom: 5, right: 14))
-            badgeView.translatesAutoresizingMaskIntoConstraints = false
-
-            container.addSubviews(badgeView)
-            NSLayoutConstraint.activate([
-                badgeView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-                badgeView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16)
-            ])
-        }
-        return container
+        return button
     }
 
     // MARK: - 功能磁贴
@@ -326,12 +315,15 @@ final class HomeViewController: UIViewController {
         let tile = UIView()
         tile.backgroundColor = Theme.surface
         tile.roundCorners(radius: 20)
+        // 只是说明性磁贴，不是按钮 —— 明确关闭交互，避免「整页都能点」的错觉
+        tile.isUserInteractionEnabled = false
 
         let icon = UIImageView(image: UIImage(systemName: symbol,
                                               withConfiguration: UIImage.SymbolConfiguration(pointSize: 21, weight: .semibold)))
         icon.tintColor = Theme.brand
         icon.contentMode = .center
         icon.translatesAutoresizingMaskIntoConstraints = false
+        icon.isUserInteractionEnabled = false
 
         let label = UILabel()
         label.text = title
@@ -450,14 +442,20 @@ final class HomeViewController: UIViewController {
     }
 
     @objc private func pickFromLibrary() {
+        DebugLog.step("首页 → 相册选图")
         photoPicker.present(from: self) { [weak self] image in
             guard let self = self else { return }
-            guard let image = image else { return }
+            guard let image = image else {
+                DebugLog.step("相册选图：用户取消 / 未取到图片")
+                return
+            }
+            DebugLog.step("相册选图：取到图片 \(Int(image.size.width))x\(Int(image.size.height))")
             self.openEditor(with: image)
         }
     }
 
     @objc private func takePhoto() {
+        DebugLog.step("首页 → 拍照导入（相机可用：\(CameraService.isCameraAvailable)）")
         CameraService.presentCamera(from: self, delegate: self)
     }
 
@@ -473,18 +471,127 @@ final class HomeViewController: UIViewController {
     }
 }
 
+// MARK: - 主视觉卡
+
+/// 首页顶部品牌主视觉背景：斜向品牌渐变。
+/// 纯装饰（isUserInteractionEnabled = false），不参与任何点击。
+private final class HeroBannerView: UIView {
+
+    private let gradient = CAGradientLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1.15, y: 1)
+        gradient.colors = [
+            UIColor(rgb: 0x6C5CF0).cgColor,
+            UIColor(rgb: 0x4B3ED8).cgColor
+        ]
+        layer.insertSublayer(gradient, at: 0)
+        clipsToBounds = true
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        gradient.frame = bounds
+        CATransaction.commit()
+    }
+}
+
+// MARK: - 入口主按钮
+
+/// 首页双入口按钮：实心品牌渐变 + 阴影 + 按压回弹，
+/// 自带渐变层而不是「按钮里再塞一个装饰视图」，从根上杜绝点击被吞的问题。
+final class EntryCardButton: UIControl {
+
+    private let gradient = CAGradientLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        configure()
+    }
+
+    private func configure() {
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 1)
+        gradient.colors = [
+            UIColor.adaptive(light: 0x6C5CF0, dark: 0x7B6CFF).cgColor,
+            UIColor.adaptive(light: 0x4B3ED8, dark: 0x4E3FD8).cgColor
+        ]
+        layer.insertSublayer(gradient, at: 0)
+        layer.cornerRadius = 22
+        layer.cornerCurve = .continuous
+        layer.shadowColor = UIColor.adaptive(light: 0x4B3ED8, dark: 0x000000).cgColor
+        layer.shadowOpacity = 0.28
+        layer.shadowRadius = 14
+        layer.shadowOffset = CGSize(width: 0, height: 8)
+        clipsToBounds = false
+        layer.masksToBounds = false
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        gradient.frame = bounds
+        gradient.cornerRadius = layer.cornerRadius
+        CATransaction.commit()
+    }
+
+    /// 只有本按钮参与命中测试；子视图（图标 / 文案 / 箭头）全部不拦事件
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard isUserInteractionEnabled, !isHidden, alpha > 0.01 else { return nil }
+        return bounds.contains(point) ? self : nil
+    }
+
+    override var isHighlighted: Bool {
+        didSet {
+            UIView.animate(withDuration: 0.14, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
+                self.transform = self.isHighlighted
+                    ? CGAffineTransform(scaleX: 0.96, y: 0.96)
+                    : .identity
+                self.alpha = self.isHighlighted ? 0.92 : 1
+            }
+        }
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+        gradient.colors = [
+            UIColor.adaptive(light: 0x6C5CF0, dark: 0x7B6CFF).resolvedColor(with: traitCollection).cgColor,
+            UIColor.adaptive(light: 0x4B3ED8, dark: 0x4E3FD8).resolvedColor(with: traitCollection).cgColor
+        ]
+        layer.shadowColor = UIColor.adaptive(light: 0x4B3ED8, dark: 0x000000)
+            .resolvedColor(with: traitCollection).cgColor
+    }
+}
+
 // MARK: - 相机回调
 
 extension HomeViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     func imagePickerController(_ picker: UIImagePickerController,
                                didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        DebugLog.step("相机：拍完回调")
         picker.dismiss(animated: true)
         guard let image = info[.originalImage] as? UIImage else { return }
         openEditor(with: image)
     }
 
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        DebugLog.step("相机：用户取消")
         picker.dismiss(animated: true)
     }
 }
