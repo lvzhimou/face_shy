@@ -91,20 +91,6 @@ final class HomeViewController: UIViewController {
     // MARK: - 头部
 
     private func makeHeader() -> UIView {
-        let icon = UIImageView(image: UIImage(systemName: "theatermasks.fill"))
-        icon.tintColor = .white
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-
-        let iconBackground = UIView()
-        iconBackground.backgroundColor = Theme.brand
-        iconBackground.roundCorners(radius: 18)
-        iconBackground.layer.shadowColor = Theme.brand.cgColor
-        iconBackground.layer.shadowOpacity = 0.35
-        iconBackground.layer.shadowRadius = 12
-        iconBackground.layer.shadowOffset = CGSize(width: 0, height: 5)
-        iconBackground.addSubviews(icon)
-
         let title = UILabel()
         title.text = "隐颜 FaceShy"
         title.font = Theme.roundedFont(26, weight: .bold)
@@ -116,23 +102,9 @@ final class HomeViewController: UIViewController {
         subtitle.textColor = Theme.textSecondary
         subtitle.numberOfLines = 0
 
-        let textStack = UIStackView(arrangedSubviews: [title, subtitle])
-        textStack.axis = .vertical
-        textStack.spacing = 4
-
-        let row = UIStackView(arrangedSubviews: [iconBackground, textStack])
-        row.axis = .horizontal
-        row.spacing = 14
-        row.alignment = .center
-
-        NSLayoutConstraint.activate([
-            iconBackground.widthAnchor.constraint(equalToConstant: 56),
-            iconBackground.heightAnchor.constraint(equalToConstant: 56),
-            icon.widthAnchor.constraint(equalToConstant: 30),
-            icon.heightAnchor.constraint(equalToConstant: 30),
-            icon.centerXAnchor.constraint(equalTo: iconBackground.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: iconBackground.centerYAnchor)
-        ])
+        let row = UIStackView(arrangedSubviews: [title, subtitle])
+        row.axis = .vertical
+        row.spacing = 4
         return row
     }
 
@@ -163,24 +135,39 @@ final class HomeViewController: UIViewController {
         textStack.alignment = .leading
         textStack.setCustomSpacing(14, after: title)
 
-        // 右侧装饰大 emoji，稍微旋转营造「贴纸」感
-        let mask = UILabel()
-        mask.text = "🎭"
-        mask.font = .systemFont(ofSize: 88)
-        mask.alpha = 0.9
-        mask.transform = CGAffineTransform(rotationAngle: .pi / 9)
-        mask.translatesAutoresizingMaskIntoConstraints = false
-        mask.isUserInteractionEnabled = false
+        // 右侧放 App 图标（带白描边的圆角卡，融入品牌），稍微旋转营造「贴纸」感
+        let logoContainer = UIView()
+        logoContainer.isUserInteractionEnabled = false
+        logoContainer.translatesAutoresizingMaskIntoConstraints = false
 
-        card.addSubviews(textStack, mask)
+        let logoView = UIImageView(image: UIImage(named: "AppLogo"))
+        logoView.contentMode = .scaleAspectFill
+        logoView.clipsToBounds = true
+        logoView.layer.cornerRadius = 20
+        logoView.layer.cornerCurve = .continuous
+        logoView.layer.borderWidth = 3
+        logoView.layer.borderColor = UIColor.white.cgColor
+        logoView.isUserInteractionEnabled = false
+        logoView.translatesAutoresizingMaskIntoConstraints = false
+
+        logoContainer.addSubview(logoView)
+        logoContainer.transform = CGAffineTransform(rotationAngle: .pi / 14)
+
+        card.addSubviews(textStack, logoContainer)
         NSLayoutConstraint.activate([
             textStack.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
             textStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 22),
             textStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -22),
-            textStack.trailingAnchor.constraint(lessThanOrEqualTo: card.trailingAnchor, constant: -92),
+            textStack.trailingAnchor.constraint(lessThanOrEqualTo: card.trailingAnchor, constant: -96),
 
-            mask.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -10),
-            mask.centerYAnchor.constraint(equalTo: card.centerYAnchor, constant: 6)
+            logoContainer.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            logoContainer.centerYAnchor.constraint(equalTo: card.centerYAnchor),
+            logoView.widthAnchor.constraint(equalToConstant: 78),
+            logoView.heightAnchor.constraint(equalToConstant: 78),
+            logoView.topAnchor.constraint(equalTo: logoContainer.topAnchor),
+            logoView.bottomAnchor.constraint(equalTo: logoContainer.bottomAnchor),
+            logoView.leadingAnchor.constraint(equalTo: logoContainer.leadingAnchor),
+            logoView.trailingAnchor.constraint(equalTo: logoContainer.trailingAnchor)
         ])
         return card
     }
@@ -261,14 +248,8 @@ final class HomeViewController: UIViewController {
         textStack.alignment = .leading
         textStack.isUserInteractionEnabled = false
 
-        let arrow = UIImageView(image: UIImage(systemName: "chevron.right",
-                                               withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)))
-        arrow.tintColor = UIColor.white.withAlphaComponent(0.75)
-        arrow.contentMode = .center
-        arrow.isUserInteractionEnabled = false
-
-        // 整卡内边距 16：图标 + 文案 + 箭头，垂直居中
-        let content = UIStackView(arrangedSubviews: [iconTile, textStack, arrow])
+        // 整卡内边距 16：图标 + 文案，垂直居中
+        let content = UIStackView(arrangedSubviews: [iconTile, textStack])
         content.axis = .horizontal
         content.spacing = 10
         content.alignment = .center
@@ -288,10 +269,7 @@ final class HomeViewController: UIViewController {
             icon.widthAnchor.constraint(equalToConstant: 24),
             icon.heightAnchor.constraint(equalToConstant: 24),
             icon.centerXAnchor.constraint(equalTo: iconTile.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: iconTile.centerYAnchor),
-
-            arrow.widthAnchor.constraint(equalToConstant: 14),
-            arrow.heightAnchor.constraint(equalToConstant: 14)
+            icon.centerYAnchor.constraint(equalTo: iconTile.centerYAnchor)
         ])
         return button
     }

@@ -191,8 +191,12 @@ final class EditableItemView: UIView {
         transform = CGAffineTransform(rotationAngle: rotationAngle)
         contentView?.alpha = opacityValue
 
+        // 关键：按钮几何必须与 bounds/transform 同帧更新。
+        // 只依赖 layoutSubviews 会在捏合时滞后一帧，
+        // 按钮和图标就会跟着缩放/旋转短暂变形（用户可见的「icon 变形」）。
+        syncActionButtonsGeometry()
+
         applyContentAppearance()
-        setNeedsLayout()
 
         if notify {
             delegate?.editableItemView(self,
@@ -200,6 +204,26 @@ final class EditableItemView: UIView {
                                        scale: scaleFactor,
                                        rotation: rotationAngle)
         }
+    }
+
+    /// 立即把两个圆形按钮摆到角上，且保持屏幕上的大小与角度恒定。
+    /// 用 center + bounds 定位（不经过 transform 换算的 frame），
+    /// 再用「父旋转的精确反向旋转」抵消父视图的旋转，
+    /// 无论元素怎么缩放旋转，按钮在屏幕上始终是 36pt 正圆、图标不变形。
+    private func syncActionButtonsGeometry() {
+        let side = buttonSide
+        let offset: CGFloat = 4
+        let counterRotation = CGAffineTransform(rotationAngle: -rotationAngle)
+
+        deleteButton.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+        deleteButton.center = CGPoint(x: -side / 2 - offset,
+                                      y: -side / 2 - offset)
+        deleteButton.transform = counterRotation
+
+        replaceButton.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+        replaceButton.center = CGPoint(x: -side / 2 - offset,
+                                       y: bounds.height - side / 2 + offset)
+        replaceButton.transform = counterRotation
     }
 
     func setScale(_ value: CGFloat) {
@@ -235,23 +259,8 @@ final class EditableItemView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
 
-        // ✕ 固定在左上角外侧，人脸图标固定在左下角外侧
-        let offset: CGFloat = 4
-        let side = buttonSide
-
-        deleteButton.frame = CGRect(x: -side / 2 - offset,
-                                    y: -side / 2 - offset,
-                                    width: side,
-                                    height: side)
-
-        replaceButton.frame = CGRect(x: -side / 2 - offset,
-                                     y: bounds.height - side / 2 + offset,
-                                     width: side,
-                                     height: side)
-
-        // 按钮保持正立（不受元素旋转影响）
-        deleteButton.transform = transform.inverted()
-        replaceButton.transform = transform.inverted()
+        // 兜底：任何触发布局的路径（旋转 / 分屏 / 画布变化）都重新对齐按钮
+        syncActionButtonsGeometry()
 
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 8).cgPath
     }
@@ -313,6 +322,8 @@ final class EditableItemView: UIView {
         let image = UIImage(systemName: symbol, withConfiguration: configuration)?
             .withTintColor(tint, renderingMode: .alwaysOriginal)
         button.setImage(image, for: .normal)
+        // 图标始终等比显示，绝不拉伸变形
+        button.imageView?.contentMode = .scaleAspectFit
     }
 
     private func updateChrome() {
