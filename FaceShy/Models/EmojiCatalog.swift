@@ -1,126 +1,116 @@
 //
-//  EmojiCatalog.swift
+//  StickerCatalog.swift
 //  FaceShy
 //
-//  内置 emoji 表情库（全部为系统 emoji 字符，无需任何网络或资源文件）。
-//  按「基础脸 / 高级脸 1 / 高级脸 2 / 高级脸 3」四个分组组织，共 200 个，
-//  全部以「遮脸」为选型标准：优先 emoji 字形大、五官居中、覆盖面积大的表情。
+//  内置表情目录，分三类：
+//  - emoji：系统 emoji，只保留「脸部占满整个字形」的表情，
+//    已剔除手势 / 物品 / 内脏 / 全身人物等遮不住脸的（💯 类、👍 类等）
+//  - 女生 / 男生：内置 Q版人物头像表情（bundle StickerPacks/Girls | Boys），
+//    用于自动贴表情时按识别到的性别匹配
+//
+//  全部资源随 App 打包，本地读取，无网络。
 //
 
-import Foundation
+import UIKit
 
-enum EmojiCategory: Int, CaseIterable {
-    case basic = 0
-    case advanced1 = 1
-    case advanced2 = 2
-    case advanced3 = 3
+/// 表情面板的三大页签
+enum StickerSection: Int, CaseIterable {
+    case emoji = 0
+    case girl = 1
+    case boy = 2
 
-    /// 分组标题（表情面板页签）
     var title: String {
         switch self {
-        case .basic: return "基础脸"
-        case .advanced1: return "高级脸 1"
-        case .advanced2: return "高级脸 2"
-        case .advanced3: return "高级脸 3"
+        case .emoji: return "表情"
+        case .girl: return "女生"
+        case .boy: return "男生"
+        }
+    }
+
+    var gender: AvatarGender? {
+        switch self {
+        case .emoji: return nil
+        case .girl: return .girl
+        case .boy: return .boy
         }
     }
 }
 
-enum EmojiCatalog {
+enum StickerCatalog {
 
-    // MARK: - 分组定义
+    // MARK: - emoji（全部为脸部特写，可完整遮脸）
 
-    /// 基础脸：最常用、最百搭的遮脸表情
-    static let basic: [String] = [
+    static let emojis: [String] = [
+        // 经典脸
         "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
         "🥲", "🥹", "😊", "😇", "🙂", "🙃", "😉", "😌",
         "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛",
         "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥸",
         "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕",
-        "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭"
-    ]
-
-    /// 高级脸 1：委屈 / 难过 / 惊讶 / 生气等强情绪（参考截图里的流泪脸系列）
-    static let advanced1: [String] = [
+        "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭",
+        // 强情绪脸
         "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶",
         "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭",
         "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯",
         "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪",
         "😵", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒",
-        "🤕", "🤑", "🤠", "🤡", "😈", "👿", "👻", "💀"
-    ]
-
-    /// 高级脸 2：人物形象 / 手势 / 配件（适合整体遮盖，风格更强）
-    static let advanced2: [String] = [
-        "🙏", "🤝", "👏", "🙌", "👐", "🤲", "🫶", "✌️",
-        "🤞", "🫰", "🤙", "👍", "👎", "👌", "🤌", "🤏",
-        "👀", "👁️", "👄", "🫦", "🧠", "🫀", "👣", "🦶",
+        "🤕", "🤑", "🤠", "🤡", "😈", "👿", "👻", "💀",
+        // 拟人脸（脸部占比大）
         "👶", "🧒", "👦", "👧", "🧑", "👨", "👩", "🧓",
-        "👴", "👵", "👮", "🕵️", "💃", "🕺", "🧘", "🏃",
-        "🦸", "🦹", "🧙", "🧚", "🧛", "🧜", "🧝", "🧞",
-        "🧟", "🤖", "👽", "🎃", "👼", "🎅", "🤶", "🧑‍🎤"
-    ]
-
-    /// 高级脸 3：动物与卡通形象（适合整体遮盖，趣味性强）
-    static let advanced3: [String] = [
+        "👴", "👵", "🤖", "👽", "🎃",
+        // 动物脸（脸部占满字形）
         "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼",
         "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🙈",
         "🙉", "🙊", "🐔", "🐧", "🐦", "🐤", "🦆", "🦉",
-        "🦄", "🐝", "🦋", "🐌", "🐞", "🐢", "🐍", "🐙",
-        "🦀", "🐠", "🐬", "🐳", "🌸", "🌻", "🌹", "🍀",
-        "🌈", "⭐️", "🌙", "☁️", "🔥", "💖", "💜", "🧡"
+        "🦄", "🐬", "🐳"
     ]
 
-    // MARK: - 汇总
+    // MARK: - 内置 Q版人物表情（bundle 资源）
 
-    /// 全部分组（顺序即面板页签顺序）
-    static let categories: [(category: EmojiCategory, emojis: [String])] = [
-        (.basic, basic),
-        (.advanced1, advanced1),
-        (.advanced2, advanced2),
-        (.advanced3, advanced3)
-    ]
+    static let girlStickers: [String] = (1...50).map { String(format: "girl_%02d", $0) }
+    static let boyStickers: [String] = (1...50).map { String(format: "boy_%02d", $0) }
 
-    /// 全部表情合集（随机表情时使用）
-    static let allEmojis: [String] = categories.flatMap { $0.emojis }
+    /// 读取内置 Q版表情（bundle StickerPacks/Girls | Boys 目录）
+    static func avatarImage(named fileName: String, gender: AvatarGender) -> UIImage? {
+        let folder = gender == .girl ? "Girls" : "Boys"
+        guard let url = Bundle.main.url(forResource: fileName,
+                                        withExtension: "png",
+                                        subdirectory: folder) else { return nil }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return UIImage(data: data)
+    }
 
-    /// 某一分组的表情
-    static func emojis(in category: EmojiCategory) -> [String] {
-        switch category {
-        case .basic: return basic
-        case .advanced1: return advanced1
-        case .advanced2: return advanced2
-        case .advanced3: return advanced3
-        }
+    static func stickers(for gender: AvatarGender) -> [String] {
+        gender == .girl ? girlStickers : boyStickers
     }
 
     // MARK: - 随机
 
-    /// 记录上一次随机到的首个表情，避免「一键随机」时没有变化
-    private static var lastEmoji: String?
+    /// 记录上一次随机结果，避免「一键随机」时没有变化
+    private static var lastRandomValue: String?
 
-    /// 生成一组随机表情（数量 = 需要遮挡的人脸数）
-    static func randomSet(count: Int) -> [String] {
-        guard count > 0 else { return [] }
-        let pool = allEmojis
-
-        if count == 1 {
-            var candidate = pool.randomElement() ?? "😀"
-            var guardCount = 0
-            while candidate == lastEmoji && pool.count > 1 && guardCount < 20 {
-                candidate = pool.randomElement() ?? "😀"
-                guardCount += 1
-            }
-            lastEmoji = candidate
-            return [candidate]
+    /// 随机一个 emoji（带防重复）
+    static func randomEmoji() -> String {
+        var candidate = emojis.randomElement() ?? "😀"
+        var guardCount = 0
+        while candidate == lastRandomValue && emojis.count > 1 && guardCount < 20 {
+            candidate = emojis.randomElement() ?? "😀"
+            guardCount += 1
         }
+        lastRandomValue = candidate
+        return candidate
+    }
 
-        var shuffled = pool.shuffled()
-        if let last = lastEmoji, shuffled.count > 1, shuffled.first == last {
-            shuffled.swapAt(0, 1)
+    /// 随机一个内置 Q版表情（带防重复）
+    static func randomAvatar(gender: AvatarGender) -> String {
+        let pool = stickers(for: gender)
+        var candidate = pool.randomElement() ?? (pool.first ?? "girl_01")
+        var guardCount = 0
+        while candidate == lastRandomValue && pool.count > 1 && guardCount < 20 {
+            candidate = pool.randomElement() ?? (pool.first ?? "girl_01")
+            guardCount += 1
         }
-        let result = (0..<count).map { shuffled[$0 % shuffled.count] }
-        lastEmoji = result.first
-        return result
+        lastRandomValue = candidate
+        return candidate
     }
 }

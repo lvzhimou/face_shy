@@ -194,7 +194,7 @@ final class EditorViewController: UIViewController {
         }
     }
 
-    /// 把人脸矩形换算成画布坐标，并自动生成 emoji 贴纸
+    /// 把人脸矩形换算成画布坐标，并自动生成遮挡表情
     private func placeStickers(for faces: [DetectedFace]) {
         let canvasSize = canvasView.canvasSize
         guard canvasSize.width > 0, canvasSize.height > 0 else { return }
@@ -202,14 +202,24 @@ final class EditorViewController: UIViewController {
         // 重新识别时先清掉旧的人脸贴纸
         removeItems(where: { $0.role == .faceSticker })
 
-        let emojis = EmojiCatalog.randomSet(count: faces.count)
-
         for (index, face) in faces.enumerated() {
             let rect = canvasRect(for: face.boundingBox, in: canvasSize)
-            // 外扩一点，保证表情能完整盖住脸部（含发际线、耳侧）
-            let expanded = rect.insetBy(dx: -rect.width * 0.16, dy: -rect.height * 0.16)
+            // 大幅外扩：Vision 的人脸框只盖到眉毛到下巴，
+            // 外扩 30%+ 才能把额头 / 发际线 / 耳侧一起遮住
+            let expanded = rect.insetBy(dx: -rect.width * 0.30, dy: -rect.height * 0.32)
 
-            let item = EditorItem(content: .emoji(emojis[index % emojis.count]),
+            // 性别匹配：有把握时用对应性别的 Q版表情，没把握用 emoji
+            let content: ItemContent
+            switch face.gender {
+            case .girl:
+                content = .avatar(fileName: StickerCatalog.randomAvatar(gender: .girl), gender: .girl)
+            case .boy:
+                content = .avatar(fileName: StickerCatalog.randomAvatar(gender: .boy), gender: .boy)
+            case .unknown:
+                content = .emoji(StickerCatalog.randomEmoji())
+            }
+
+            let item = EditorItem(content: content,
                                   role: .faceSticker,
                                   center: CGPoint(x: expanded.midX, y: expanded.midY),
                                   baseSize: expanded.size,
@@ -337,20 +347,28 @@ final class EditorViewController: UIViewController {
         }
     }
 
-    /// 一键随机更换全部表情（人脸贴纸优先，没有则换全部）
+    /// 一键随机更换表情：
+    /// - 当前有选中的贴纸 -> 只换它
+    /// - 没有选中 -> 换全部人脸贴纸（没有人脸贴纸时退回换全部）
     private func randomizeFaceStickers() {
-        let targets = items.filter { $0.role == .faceSticker }.isEmpty
-            ? items
-            : items.filter { $0.role == .faceSticker }
+        if let id = selectedItemID, let item = items.first(where: { $0.id == id }) {
+            let content = ItemContent.emoji(StickerCatalog.randomEmoji())
+            item.content = content
+            itemViews[id]?.updateContent(content)
+            Toast.show("已随机更换当前表情", in: view)
+            return
+        }
+
+        var targets = items.filter { $0.role == .faceSticker }
+        if targets.isEmpty { targets = items }
 
         guard !targets.isEmpty else {
             Toast.show("还没有贴纸，可用「手动加贴纸」添加一个", in: view)
             return
         }
 
-        let emojis = EmojiCatalog.randomSet(count: targets.count)
-        for (index, item) in targets.enumerated() {
-            let content = ItemContent.emoji(emojis[index % emojis.count])
+        for item in targets {
+            let content = ItemContent.emoji(StickerCatalog.randomEmoji())
             item.content = content
             itemViews[item.id]?.updateContent(content)
         }

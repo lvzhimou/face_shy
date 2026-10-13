@@ -58,9 +58,10 @@ def q(value):
 
 
 def collect_files():
-    """返回 (swift 相对路径列表, 资源相对路径列表, info.plist 相对路径)"""
+    """返回 (swift 相对路径列表, 资源相对路径列表, 文件夹引用相对路径列表, info.plist 相对路径)"""
     swift_files = []
     assets = []
+    folders = []   # 文件夹引用（整个目录原样拷进 bundle，保留子目录结构）
 
     for dirpath, dirnames, filenames in os.walk(SRC_ROOT):
         dirnames.sort()
@@ -70,6 +71,13 @@ def collect_files():
                 rel = os.path.relpath(os.path.join(dirpath, d), ROOT).replace("\\", "/")
                 assets.append(rel)
                 dirnames.remove(d)
+        # 内置表情包：每个子目录作为一个文件夹引用（避免 100 个 PNG 逐个登记）
+        if os.path.basename(dirpath) == "StickerPacks":
+            for d in list(dirnames):
+                rel = os.path.relpath(os.path.join(dirpath, d), ROOT).replace("\\", "/")
+                folders.append(rel)
+                dirnames.remove(d)
+            continue
         for f in sorted(filenames):
             if f.endswith(".swift"):
                 rel = os.path.relpath(os.path.join(dirpath, f), ROOT).replace("\\", "/")
@@ -77,7 +85,8 @@ def collect_files():
 
     swift_files.sort()
     assets.sort()
-    return swift_files, assets
+    folders.sort()
+    return swift_files, assets, folders
 
 
 def build_group_tree(entries):
@@ -93,7 +102,7 @@ def build_group_tree(entries):
 
 
 def main():
-    swift_files, assets = collect_files()
+    swift_files, assets, folders = collect_files()
     gen = UUIDGen()
 
     # ---------- 文件引用 ----------
@@ -101,6 +110,8 @@ def main():
     for path in swift_files:
         file_refs[path] = gen.next()
     for path in assets:
+        file_refs[path] = gen.next()
+    for path in folders:
         file_refs[path] = gen.next()
     info_plist_ref = gen.next()
 
@@ -112,7 +123,7 @@ def main():
         uid = gen.next()
         build_files[path] = uid
         sources_refs.append((uid, path))
-    for path in assets:
+    for path in assets + folders:
         uid = gen.next()
         build_files[path] = uid
         resources_refs.append((uid, path))
@@ -139,6 +150,10 @@ def main():
         name = os.path.basename(path)
         w("\t\t%s /* %s in Resources */ = {isa = PBXBuildFile; fileRef = %s /* %s */; };"
           % (build_files[path], name, file_refs[path], name))
+    for path in folders:
+        name = os.path.basename(path)
+        w("\t\t%s /* %s in Resources */ = {isa = PBXBuildFile; fileRef = %s /* %s */; };"
+          % (build_files[path], name, file_refs[path], name))
     w("/* End PBXBuildFile section */")
 
     # ================= PBXFileReference =================
@@ -155,6 +170,10 @@ def main():
     for path in assets:
         name = os.path.basename(path)
         w("\t\t%s /* %s */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; "
+          "path = %s; sourceTree = \"<group>\"; };" % (file_refs[path], name, q(name)))
+    for path in folders:
+        name = os.path.basename(path)
+        w("\t\t%s /* %s */ = {isa = PBXFileReference; lastKnownFileType = folder; "
           "path = %s; sourceTree = \"<group>\"; };" % (file_refs[path], name, q(name)))
     w("\t\t%s /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; "
       "path = Info.plist; sourceTree = \"<group>\"; };" % info_plist_ref)
@@ -177,6 +196,7 @@ def main():
     # 先建整棵树，需要递归生成 uuid
     entries = [(p, file_refs[p]) for p in swift_files]
     entries += [(p, file_refs[p]) for p in assets]
+    entries += [(p, file_refs[p]) for p in folders]
     tree = build_group_tree(entries)
     # Info.plist 挂到 Resources 分组
     tree.setdefault("Resources", {}).setdefault("__files__", []).append(("Info.plist", info_plist_ref))
@@ -489,6 +509,7 @@ def main():
     for p in swift_files:
         print("   - %s" % p)
     print("资源: %s" % ", ".join(assets))
+    print("文件夹引用: %s" % ", ".join(folders))
 
 
 if __name__ == "__main__":

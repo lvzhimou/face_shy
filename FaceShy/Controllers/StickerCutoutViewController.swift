@@ -69,8 +69,10 @@ final class StickerCutoutViewController: UIViewController {
     private func setupSheet() {
         modalPresentationStyle = .pageSheet
         if let sheet = sheetPresentationController {
-            sheet.detents = [.large(), .medium()]
-            sheet.prefersGrabberVisible = true
+            // 只保留大档：默认就是全高，保存按钮一进页面就能点，
+            // 不需要先手动把弹层拉起来（修复「必须拉起后才能正常保存」）
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = false
             sheet.preferredCornerRadius = 22
         }
     }

@@ -21,6 +21,15 @@ struct DetectedFace {
     let roll: CGFloat
     /// 左右偏转角度（弧度）
     let yaw: CGFloat
+    /// 性别猜测（用于匹配女生 / 男生 Q版表情；没把握时为 unknown）
+    let gender: FaceGenderGuess
+}
+
+/// 性别猜测结果
+enum FaceGenderGuess {
+    case girl
+    case boy
+    case unknown
 }
 
 enum FaceDetectionError: LocalizedError {
@@ -54,24 +63,17 @@ final class FaceDetector {
     // MARK: - Private
 
     private func performDetection(on image: UIImage) -> Result<[DetectedFace], FaceDetectionError> {
-        // 1. 准备送给 Vision 的 CGImage 与方向
-        let prepared: (cgImage: CGImage, orientation: CGImagePropertyOrientation)
-
-        if max(image.pixelSize.width, image.pixelSize.height) > detectionMaxDimension {
-            // 缩小并重绘 -> 方向已烘焙为 .up
-            let small = image.resized(maxDimension: detectionMaxDimension)
-            guard let cgImage = small.cgImage else { return .failure(.invalidImage) }
-            prepared = (cgImage, .up)
-        } else {
-            guard let cgImage = image.cgImage else { return .failure(.invalidImage) }
-            prepared = (cgImage, CGImagePropertyOrientation(image.imageOrientation))
-        }
+        // 1. 准备送给 Vision 的 CGImage：先磨平方向再缩放，
+        //    保证后续「按 boundingBox 裁人脸区域」的像素坐标完全对齐
+        let upright = image.normalizedOrientation()
+        let prepared = upright.resized(maxDimension: detectionMaxDimension)
+        guard let cgImage = prepared.cgImage else { return .failure(.invalidImage) }
 
         // 2. 构造请求（只返回人脸矩形框，速度最快）
         let request = VNDetectFaceRectanglesRequest()
 
-        let handler = VNImageRequestHandler(cgImage: prepared.cgImage,
-                                            orientation: prepared.orientation,
+        let handler = VNImageRequestHandler(cgImage: cgImage,
+                                            orientation: .up,
                                             options: [:])
         do {
             try handler.perform([request])
@@ -86,7 +88,8 @@ final class FaceDetector {
         let faces = observations.map { observation -> DetectedFace in
             DetectedFace(boundingBox: observation.boundingBox,
                          roll: CGFloat(observation.roll?.doubleValue ?? 0),
-                         yaw: CGFloat(observation.yaw?.doubleValue ?? 0))
+                         yaw: CGFloat(observation.yaw?.doubleValue ?? 0),
+                         gender: guessGender(in: cgImage, faceRect: observation.boundingBox))
         }
 
         // 3. 按面积从大到小排序，主脸优先（随机表情时主脸拿第一个）
@@ -94,6 +97,54 @@ final class FaceDetector {
             $0.boundingBox.width * $0.boundingBox.height > $1.boundingBox.width * $1.boundingBox.height
         }
         return .success(sorted)
+    }
+
+    // MARK: - 性别猜测（本地离线）
+
+    /// 对人脸区域跑一次系统自带图像分类（VNClassifyImageRequest，设备端推理），
+    /// 从分类词表里找 woman / man / girl / boy 等概念。
+    /// 没有可信信号时返回 unknown，调用方回退到 emoji。
+    /// 注意：\"woman\" 包含 \"man\" 子串、\"female\" 包含 \"male\" 子串，
+    /// 所以女生分支必须放在前面先判断。
+    private func guessGender(in cgImage: CGImage, faceRect: CGRect) -> FaceGenderGuess {
+        // 外扩一点，把发型 / 耳朵等特征带上
+        let w = faceRect.width * CGFloat(cgImage.width)
+        let h = faceRect.height * CGFloat(cgImage.height)
+        let x = faceRect.minX * CGFloat(cgImage.width)
+        let y = (1 - faceRect.maxY) * CGFloat(cgImage.height)
+        let raw = CGRect(x: x, y: y, width: w, height: h)
+            .insetBy(dx: -w * 0.2, dy: -h * 0.2)
+        let clamped = raw.intersection(CGRect(x: 0, y: 0,
+                                              width: CGFloat(cgImage.width),
+                                              height: CGFloat(cgImage.height)))
+        guard !clamped.isNull, clamped.width > 24, clamped.height > 24,
+              let faceCrop = cgImage.cropping(to: clamped) else { return .unknown }
+
+        let request = VNClassifyImageRequest()
+        let handler = VNImageRequestHandler(cgImage: faceCrop, orientation: .up)
+        do {
+            try handler.perform([request])
+        } catch {
+            return .unknown
+        }
+        guard let observations = request.results else { return .unknown }
+
+        var girlScore: Float = 0
+        var boyScore: Float = 0
+        for observation in observations.prefix(100) {
+            let identifier = observation.identifier.lowercased()
+            let confidence = observation.confidence
+            if identifier.contains("woman") || identifier.contains("girl") || identifier.contains("female") {
+                girlScore = max(girlScore, confidence)
+            } else if identifier.contains("man") || identifier.contains("boy") || identifier.contains("male") || identifier.contains("beard") {
+                boyScore = max(boyScore, confidence)
+            }
+        }
+
+        let threshold: Float = 0.05
+        if girlScore > threshold && girlScore >= boyScore { return .girl }
+        if boyScore > threshold && boyScore > girlScore { return .boy }
+        return .unknown
     }
 }
 

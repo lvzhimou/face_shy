@@ -43,8 +43,11 @@ final class EditableItemView: UIView {
     static let minScale: CGFloat = 0.2
     static let maxScale: CGFloat = 8
 
-    /// 圆形操作按钮直径
-    private let buttonSide: CGFloat = 30
+    /// 圆形操作按钮直径（= 可视直径，同时保证 ≥36pt 的可点区域）
+    private let buttonSide: CGFloat = 36
+    /// 命中区域向外扩展的边距：让双指缩放 / 旋转可以在表情外侧起手，
+    /// 否则手指落在 bounds 外时手势根本不会开始（表现为「无法缩放旋转」）
+    private let hitAreaMargin: CGFloat = 44
 
     private var contentView: UIView?
     private var textLabel: UILabel?
@@ -111,6 +114,11 @@ final class EditableItemView: UIView {
             textLabel = label
             view = label
 
+        case .avatar(let fileName, let gender):
+            let imageView = UIImageView(image: StickerCatalog.avatarImage(named: fileName, gender: gender))
+            imageView.contentMode = .scaleAspectFit
+            view = imageView
+
         case .customSticker(let fileName):
             let imageView = UIImageView(image: CustomStickerStore.shared.image(named: fileName))
             imageView.contentMode = .scaleAspectFit
@@ -160,7 +168,7 @@ final class EditableItemView: UIView {
             let side = min(baseSize.width, baseSize.height) * scaleFactor
             textLabel?.font = UIFont.systemFont(ofSize: max(side * 0.94, 6))
 
-        case .customSticker:
+        case .avatar, .customSticker:
             break
         }
     }
@@ -255,11 +263,15 @@ final class EditableItemView: UIView {
 
     /// 两个圆形按钮画在 bounds 之外，默认情况下 UIKit 不会把触摸派发给
     /// 超出父视图范围的子视图，会导致按钮「看得见点不动」。
-    /// 这里把命中区域扩展到按钮所在矩形。
+    /// 这里把命中区域扩展到：按钮所在矩形 + bounds 四周一大圈，
+    /// 后者同时解决「双指缩放 / 旋转时手指落在表情外，手势无法开始」的问题。
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         if super.point(inside: point, with: event) { return true }
-        guard isEditingItem else { return false }
-        return deleteButton.frame.contains(point) || replaceButton.frame.contains(point)
+        if isEditingItem,
+           deleteButton.frame.contains(point) || replaceButton.frame.contains(point) {
+            return true
+        }
+        return bounds.insetBy(dx: -hitAreaMargin, dy: -hitAreaMargin).contains(point)
     }
 
     // MARK: - 选中外观
@@ -267,35 +279,34 @@ final class EditableItemView: UIView {
     private func setupActionButtons() {
         configureCircleButton(deleteButton,
                               symbol: "xmark",
-                              symbolPointSize: 12,
-                              background: .white,
-                              tint: UIColor(white: 0.08, alpha: 1))
+                              symbolPointSize: 13,
+                              tint: Theme.danger)
         deleteButton.addTarget(self, action: #selector(handleDeleteButton), for: .touchUpInside)
 
         configureCircleButton(replaceButton,
                               symbol: "face.smiling",
-                              symbolPointSize: 15,
-                              background: .white,
-                              tint: UIColor(white: 0.08, alpha: 1))
+                              symbolPointSize: 16,
+                              tint: Theme.brand)
         replaceButton.addTarget(self, action: #selector(handleReplaceButton), for: .touchUpInside)
 
         addSubview(deleteButton)
         addSubview(replaceButton)
     }
 
+    /// 统一主风格的圆形操作按钮：白底 + 语义色图标 + 白色描边 + 柔和投影
     private func configureCircleButton(_ button: UIButton,
                                        symbol: String,
                                        symbolPointSize: CGFloat,
-                                       background: UIColor,
                                        tint: UIColor) {
-        button.backgroundColor = background
+        button.backgroundColor = .white
         button.layer.cornerRadius = buttonSide / 2
-        button.layer.borderWidth = 1.5
-        button.layer.borderColor = UIColor(white: 0.08, alpha: 0.9).cgColor
+        button.layer.cornerCurve = .continuous
+        button.layer.borderWidth = 2
+        button.layer.borderColor = UIColor.white.cgColor
         button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOpacity = 0.22
-        button.layer.shadowOffset = CGSize(width: 0, height: 1.5)
-        button.layer.shadowRadius = 3
+        button.layer.shadowOpacity = 0.28
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowRadius = 4
         button.clipsToBounds = false
 
         let configuration = UIImage.SymbolConfiguration(pointSize: symbolPointSize, weight: .bold)

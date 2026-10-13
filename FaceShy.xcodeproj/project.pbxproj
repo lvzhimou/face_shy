@@ -6,38 +6,41 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FACEB00C000000000000001E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000001 /* AppDelegate.swift */; };
-		FACEB00C000000000000001F /* AppNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000002 /* AppNavigationController.swift */; };
-		FACEB00C0000000000000020 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000003 /* SceneDelegate.swift */; };
-		FACEB00C0000000000000021 /* EditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000004 /* EditorViewController.swift */; };
-		FACEB00C0000000000000022 /* EmojiPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000005 /* EmojiPickerViewController.swift */; };
-		FACEB00C0000000000000023 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000006 /* HomeViewController.swift */; };
-		FACEB00C0000000000000024 /* PrivacyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000007 /* PrivacyViewController.swift */; };
-		FACEB00C0000000000000025 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000008 /* SettingsViewController.swift */; };
-		FACEB00C0000000000000026 /* StickerCutoutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000009 /* StickerCutoutViewController.swift */; };
-		FACEB00C0000000000000027 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000A /* AppSettings.swift */; };
-		FACEB00C0000000000000028 /* EditorItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000B /* EditorItem.swift */; };
-		FACEB00C0000000000000029 /* EmojiCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000C /* EmojiCatalog.swift */; };
-		FACEB00C000000000000002A /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000D /* CameraService.swift */; };
-		FACEB00C000000000000002B /* CustomStickerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000E /* CustomStickerStore.swift */; };
-		FACEB00C000000000000002C /* EditorRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000F /* EditorRenderer.swift */; };
-		FACEB00C000000000000002D /* FaceDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000010 /* FaceDetector.swift */; };
-		FACEB00C000000000000002E /* PhotoLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000011 /* PhotoLibraryService.swift */; };
-		FACEB00C000000000000002F /* StickerCutoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000012 /* StickerCutoutService.swift */; };
-		FACEB00C0000000000000030 /* StickerUploadFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000013 /* StickerUploadFlow.swift */; };
-		FACEB00C0000000000000031 /* HUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000014 /* HUD.swift */; };
-		FACEB00C0000000000000032 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000015 /* Theme.swift */; };
-		FACEB00C0000000000000033 /* UIImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000016 /* UIImage+Extensions.swift */; };
-		FACEB00C0000000000000034 /* UIView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000017 /* UIView+Layout.swift */; };
-		FACEB00C0000000000000035 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000018 /* CanvasView.swift */; };
-		FACEB00C0000000000000036 /* EditableItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000019 /* EditableItemView.swift */; };
-		FACEB00C0000000000000037 /* EditorToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001A /* EditorToolbarView.swift */; };
-		FACEB00C0000000000000038 /* ScanOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001B /* ScanOverlayView.swift */; };
-		FACEB00C0000000000000039 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001C /* Assets.xcassets */; };
+		FACEB00C0000000000000021 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000001 /* AppDelegate.swift */; };
+		FACEB00C0000000000000022 /* AppNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000002 /* AppNavigationController.swift */; };
+		FACEB00C0000000000000023 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000003 /* SceneDelegate.swift */; };
+		FACEB00C0000000000000024 /* EditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000004 /* EditorViewController.swift */; };
+		FACEB00C0000000000000025 /* EmojiPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000005 /* EmojiPickerViewController.swift */; };
+		FACEB00C0000000000000026 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000006 /* HomeViewController.swift */; };
+		FACEB00C0000000000000027 /* PrivacyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000007 /* PrivacyViewController.swift */; };
+		FACEB00C0000000000000028 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000008 /* SettingsViewController.swift */; };
+		FACEB00C0000000000000029 /* StickerCutoutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000009 /* StickerCutoutViewController.swift */; };
+		FACEB00C000000000000002A /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000A /* AppSettings.swift */; };
+		FACEB00C000000000000002B /* EditorItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000B /* EditorItem.swift */; };
+		FACEB00C000000000000002C /* EmojiCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000C /* EmojiCatalog.swift */; };
+		FACEB00C000000000000002D /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000D /* CameraService.swift */; };
+		FACEB00C000000000000002E /* CustomStickerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000E /* CustomStickerStore.swift */; };
+		FACEB00C000000000000002F /* EditorRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000000F /* EditorRenderer.swift */; };
+		FACEB00C0000000000000030 /* FaceDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000010 /* FaceDetector.swift */; };
+		FACEB00C0000000000000031 /* PhotoLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000011 /* PhotoLibraryService.swift */; };
+		FACEB00C0000000000000032 /* StickerCutoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000012 /* StickerCutoutService.swift */; };
+		FACEB00C0000000000000033 /* StickerUploadFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000013 /* StickerUploadFlow.swift */; };
+		FACEB00C0000000000000034 /* HUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000014 /* HUD.swift */; };
+		FACEB00C0000000000000035 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000015 /* Theme.swift */; };
+		FACEB00C0000000000000036 /* UIImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000016 /* UIImage+Extensions.swift */; };
+		FACEB00C0000000000000037 /* UIView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000017 /* UIView+Layout.swift */; };
+		FACEB00C0000000000000038 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000018 /* CanvasView.swift */; };
+		FACEB00C0000000000000039 /* EditableItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C0000000000000019 /* EditableItemView.swift */; };
+		FACEB00C000000000000003A /* EditorToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001A /* EditorToolbarView.swift */; };
+		FACEB00C000000000000003B /* GradientCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001B /* GradientCardView.swift */; };
+		FACEB00C000000000000003C /* ScanOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001C /* ScanOverlayView.swift */; };
+		FACEB00C000000000000003D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001D /* Assets.xcassets */; };
+		FACEB00C000000000000003E /* Boys in Resources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001E /* Boys */; };
+		FACEB00C000000000000003F /* Girls in Resources */ = {isa = PBXBuildFile; fileRef = FACEB00C000000000000001F /* Girls */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FACEB00C000000000000003A /* FaceShy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceShy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FACEB00C0000000000000040 /* FaceShy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceShy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FACEB00C0000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		FACEB00C0000000000000002 /* AppNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationController.swift; sourceTree = "<group>"; };
 		FACEB00C0000000000000003 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -64,13 +67,16 @@
 		FACEB00C0000000000000018 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
 		FACEB00C0000000000000019 /* EditableItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableItemView.swift; sourceTree = "<group>"; };
 		FACEB00C000000000000001A /* EditorToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorToolbarView.swift; sourceTree = "<group>"; };
-		FACEB00C000000000000001B /* ScanOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanOverlayView.swift; sourceTree = "<group>"; };
-		FACEB00C000000000000001C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		FACEB00C000000000000001D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FACEB00C000000000000001B /* GradientCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientCardView.swift; sourceTree = "<group>"; };
+		FACEB00C000000000000001C /* ScanOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanOverlayView.swift; sourceTree = "<group>"; };
+		FACEB00C000000000000001D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FACEB00C000000000000001E /* Boys */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Boys; sourceTree = "<group>"; };
+		FACEB00C000000000000001F /* Girls */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Girls; sourceTree = "<group>"; };
+		FACEB00C0000000000000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		FACEB00C000000000000003B /* Frameworks */ = {
+		FACEB00C0000000000000041 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -80,7 +86,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		FACEB00C000000000000003D /* App */ = {
+		FACEB00C0000000000000043 /* App */ = {
 			isa = PBXGroup;
 			children = (
 				FACEB00C0000000000000001 /* AppDelegate.swift */,
@@ -90,7 +96,7 @@
 			path = App;
 			sourceTree = "<group>";
 		};
-		FACEB00C000000000000003E /* Controllers */ = {
+		FACEB00C0000000000000044 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
 				FACEB00C0000000000000004 /* EditorViewController.swift */,
@@ -103,7 +109,7 @@
 			path = Controllers;
 			sourceTree = "<group>";
 		};
-		FACEB00C000000000000003F /* Models */ = {
+		FACEB00C0000000000000045 /* Models */ = {
 			isa = PBXGroup;
 			children = (
 				FACEB00C000000000000000A /* AppSettings.swift */,
@@ -113,16 +119,26 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		FACEB00C0000000000000040 /* Resources */ = {
+		FACEB00C0000000000000047 /* StickerPacks */ = {
 			isa = PBXGroup;
 			children = (
-				FACEB00C000000000000001C /* Assets.xcassets */,
-				FACEB00C000000000000001D /* Info.plist */,
+				FACEB00C000000000000001E /* Boys */,
+				FACEB00C000000000000001F /* Girls */,
+			);
+			path = StickerPacks;
+			sourceTree = "<group>";
+		};
+		FACEB00C0000000000000046 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FACEB00C0000000000000047 /* StickerPacks */,
+				FACEB00C000000000000001D /* Assets.xcassets */,
+				FACEB00C0000000000000020 /* Info.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		FACEB00C0000000000000041 /* Services */ = {
+		FACEB00C0000000000000048 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				FACEB00C000000000000000D /* CameraService.swift */,
@@ -136,7 +152,7 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		FACEB00C0000000000000042 /* Support */ = {
+		FACEB00C0000000000000049 /* Support */ = {
 			isa = PBXGroup;
 			children = (
 				FACEB00C0000000000000014 /* HUD.swift */,
@@ -147,57 +163,58 @@
 			path = Support;
 			sourceTree = "<group>";
 		};
-		FACEB00C0000000000000043 /* Views */ = {
+		FACEB00C000000000000004A /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				FACEB00C0000000000000018 /* CanvasView.swift */,
 				FACEB00C0000000000000019 /* EditableItemView.swift */,
 				FACEB00C000000000000001A /* EditorToolbarView.swift */,
-				FACEB00C000000000000001B /* ScanOverlayView.swift */,
+				FACEB00C000000000000001B /* GradientCardView.swift */,
+				FACEB00C000000000000001C /* ScanOverlayView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		FACEB00C000000000000003C /* FaceShy */ = {
+		FACEB00C0000000000000042 /* FaceShy */ = {
 			isa = PBXGroup;
 			children = (
-				FACEB00C000000000000003D /* App */,
-				FACEB00C000000000000003E /* Controllers */,
-				FACEB00C000000000000003F /* Models */,
-				FACEB00C0000000000000040 /* Resources */,
-				FACEB00C0000000000000041 /* Services */,
-				FACEB00C0000000000000042 /* Support */,
-				FACEB00C0000000000000043 /* Views */,
+				FACEB00C0000000000000043 /* App */,
+				FACEB00C0000000000000044 /* Controllers */,
+				FACEB00C0000000000000045 /* Models */,
+				FACEB00C0000000000000046 /* Resources */,
+				FACEB00C0000000000000048 /* Services */,
+				FACEB00C0000000000000049 /* Support */,
+				FACEB00C000000000000004A /* Views */,
 			);
 			path = FaceShy;
 			sourceTree = "<group>";
 		};
-		FACEB00C0000000000000044 /* Products */ = {
+		FACEB00C000000000000004B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FACEB00C000000000000003A /* FaceShy.app */,
+				FACEB00C0000000000000040 /* FaceShy.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		FACEB00C0000000000000045 = {
+		FACEB00C000000000000004C = {
 			isa = PBXGroup;
 			children = (
-				FACEB00C000000000000003C /* FaceShy */,
-				FACEB00C0000000000000044 /* Products */,
+				FACEB00C0000000000000042 /* FaceShy */,
+				FACEB00C000000000000004B /* Products */,
 			);
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FACEB00C0000000000000046 /* FaceShy */ = {
+		FACEB00C000000000000004D /* FaceShy */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FACEB00C0000000000000049 /* Build configuration list for PBXNativeTarget "FaceShy" */;
+			buildConfigurationList = FACEB00C0000000000000050 /* Build configuration list for PBXNativeTarget "FaceShy" */;
 			buildPhases = (
-				FACEB00C0000000000000047 /* Sources */,
-				FACEB00C000000000000003B /* Frameworks */,
-				FACEB00C0000000000000048 /* Resources */,
+				FACEB00C000000000000004E /* Sources */,
+				FACEB00C0000000000000041 /* Frameworks */,
+				FACEB00C000000000000004F /* Resources */,
 			);
 			buildRules = (
 			);
@@ -205,25 +222,25 @@
 			);
 			name = FaceShy;
 			productName = FaceShy;
-			productReference = FACEB00C000000000000003A /* FaceShy.app */;
+			productReference = FACEB00C0000000000000040 /* FaceShy.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		FACEB00C000000000000004A /* Project object */ = {
+		FACEB00C0000000000000051 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					FACEB00C0000000000000046 = {
+					FACEB00C000000000000004D = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
-			buildConfigurationList = FACEB00C000000000000004B /* Build configuration list for PBXProject "FaceShy" */;
+			buildConfigurationList = FACEB00C0000000000000052 /* Build configuration list for PBXProject "FaceShy" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
@@ -232,66 +249,69 @@
 				en,
 				Base,
 			);
-			mainGroup = FACEB00C0000000000000045;
-			productRefGroup = FACEB00C0000000000000044 /* Products */;
+			mainGroup = FACEB00C000000000000004C;
+			productRefGroup = FACEB00C000000000000004B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FACEB00C0000000000000046 /* FaceShy */,
+				FACEB00C000000000000004D /* FaceShy */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		FACEB00C0000000000000048 /* Resources */ = {
+		FACEB00C000000000000004F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FACEB00C0000000000000039 /* Assets.xcassets in Resources */,
+				FACEB00C000000000000003D /* Assets.xcassets in Resources */,
+				FACEB00C000000000000003E /* Boys in Resources */,
+				FACEB00C000000000000003F /* Girls in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		FACEB00C0000000000000047 /* Sources */ = {
+		FACEB00C000000000000004E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FACEB00C000000000000001E /* AppDelegate.swift in Sources */,
-				FACEB00C000000000000001F /* AppNavigationController.swift in Sources */,
-				FACEB00C0000000000000020 /* SceneDelegate.swift in Sources */,
-				FACEB00C0000000000000021 /* EditorViewController.swift in Sources */,
-				FACEB00C0000000000000022 /* EmojiPickerViewController.swift in Sources */,
-				FACEB00C0000000000000023 /* HomeViewController.swift in Sources */,
-				FACEB00C0000000000000024 /* PrivacyViewController.swift in Sources */,
-				FACEB00C0000000000000025 /* SettingsViewController.swift in Sources */,
-				FACEB00C0000000000000026 /* StickerCutoutViewController.swift in Sources */,
-				FACEB00C0000000000000027 /* AppSettings.swift in Sources */,
-				FACEB00C0000000000000028 /* EditorItem.swift in Sources */,
-				FACEB00C0000000000000029 /* EmojiCatalog.swift in Sources */,
-				FACEB00C000000000000002A /* CameraService.swift in Sources */,
-				FACEB00C000000000000002B /* CustomStickerStore.swift in Sources */,
-				FACEB00C000000000000002C /* EditorRenderer.swift in Sources */,
-				FACEB00C000000000000002D /* FaceDetector.swift in Sources */,
-				FACEB00C000000000000002E /* PhotoLibraryService.swift in Sources */,
-				FACEB00C000000000000002F /* StickerCutoutService.swift in Sources */,
-				FACEB00C0000000000000030 /* StickerUploadFlow.swift in Sources */,
-				FACEB00C0000000000000031 /* HUD.swift in Sources */,
-				FACEB00C0000000000000032 /* Theme.swift in Sources */,
-				FACEB00C0000000000000033 /* UIImage+Extensions.swift in Sources */,
-				FACEB00C0000000000000034 /* UIView+Layout.swift in Sources */,
-				FACEB00C0000000000000035 /* CanvasView.swift in Sources */,
-				FACEB00C0000000000000036 /* EditableItemView.swift in Sources */,
-				FACEB00C0000000000000037 /* EditorToolbarView.swift in Sources */,
-				FACEB00C0000000000000038 /* ScanOverlayView.swift in Sources */,
+				FACEB00C0000000000000021 /* AppDelegate.swift in Sources */,
+				FACEB00C0000000000000022 /* AppNavigationController.swift in Sources */,
+				FACEB00C0000000000000023 /* SceneDelegate.swift in Sources */,
+				FACEB00C0000000000000024 /* EditorViewController.swift in Sources */,
+				FACEB00C0000000000000025 /* EmojiPickerViewController.swift in Sources */,
+				FACEB00C0000000000000026 /* HomeViewController.swift in Sources */,
+				FACEB00C0000000000000027 /* PrivacyViewController.swift in Sources */,
+				FACEB00C0000000000000028 /* SettingsViewController.swift in Sources */,
+				FACEB00C0000000000000029 /* StickerCutoutViewController.swift in Sources */,
+				FACEB00C000000000000002A /* AppSettings.swift in Sources */,
+				FACEB00C000000000000002B /* EditorItem.swift in Sources */,
+				FACEB00C000000000000002C /* EmojiCatalog.swift in Sources */,
+				FACEB00C000000000000002D /* CameraService.swift in Sources */,
+				FACEB00C000000000000002E /* CustomStickerStore.swift in Sources */,
+				FACEB00C000000000000002F /* EditorRenderer.swift in Sources */,
+				FACEB00C0000000000000030 /* FaceDetector.swift in Sources */,
+				FACEB00C0000000000000031 /* PhotoLibraryService.swift in Sources */,
+				FACEB00C0000000000000032 /* StickerCutoutService.swift in Sources */,
+				FACEB00C0000000000000033 /* StickerUploadFlow.swift in Sources */,
+				FACEB00C0000000000000034 /* HUD.swift in Sources */,
+				FACEB00C0000000000000035 /* Theme.swift in Sources */,
+				FACEB00C0000000000000036 /* UIImage+Extensions.swift in Sources */,
+				FACEB00C0000000000000037 /* UIView+Layout.swift in Sources */,
+				FACEB00C0000000000000038 /* CanvasView.swift in Sources */,
+				FACEB00C0000000000000039 /* EditableItemView.swift in Sources */,
+				FACEB00C000000000000003A /* EditorToolbarView.swift in Sources */,
+				FACEB00C000000000000003B /* GradientCardView.swift in Sources */,
+				FACEB00C000000000000003C /* ScanOverlayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		FACEB00C000000000000004C /* Debug */ = {
+		FACEB00C0000000000000053 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -351,7 +371,7 @@
 			};
 			name = Debug;
 		};
-		FACEB00C000000000000004D /* Release */ = {
+		FACEB00C0000000000000054 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -405,7 +425,7 @@
 			};
 			name = Release;
 		};
-		FACEB00C000000000000004E /* Debug */ = {
+		FACEB00C0000000000000055 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -428,7 +448,7 @@
 			};
 			name = Debug;
 		};
-		FACEB00C000000000000004F /* Release */ = {
+		FACEB00C0000000000000056 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -454,25 +474,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FACEB00C000000000000004B /* Build configuration list for PBXProject "FaceShy" */ = {
+		FACEB00C0000000000000052 /* Build configuration list for PBXProject "FaceShy" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FACEB00C000000000000004C /* Debug */,
-				FACEB00C000000000000004D /* Release */,
+				FACEB00C0000000000000053 /* Debug */,
+				FACEB00C0000000000000054 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FACEB00C0000000000000049 /* Build configuration list for PBXNativeTarget "FaceShy" */ = {
+		FACEB00C0000000000000050 /* Build configuration list for PBXNativeTarget "FaceShy" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FACEB00C000000000000004E /* Debug */,
-				FACEB00C000000000000004F /* Release */,
+				FACEB00C0000000000000055 /* Debug */,
+				FACEB00C0000000000000056 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = FACEB00C000000000000004A /* Project object */;
+	rootObject = FACEB00C0000000000000051 /* Project object */;
 }

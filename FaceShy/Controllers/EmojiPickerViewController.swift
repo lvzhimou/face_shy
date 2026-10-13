@@ -2,9 +2,10 @@
 //  EmojiPickerViewController.swift
 //  FaceShy
 //
-//  表情面板：
-//  - 「基础脸 / 高级脸 1 / 高级脸 2 / 高级脸 3」四个系统 emoji 分组
-//  - 「我的贴纸」分组：上传自定义贴纸（自动抠图，保存到沙盒）、长按删除
+//  表情面板（4 个页签）：
+//  - 「表情」：系统 emoji（已筛选为可遮脸的）
+//  - 「女生」/「男生」：内置 Q版人物头像表情
+//  - 「我的贴纸」：上传自定义贴纸（自动抠图，保存到沙盒）、长按删除
 //
 //  点选后通过 onPick 回调给编辑器替换贴纸内容。
 //
@@ -21,9 +22,6 @@ final class EmojiPickerViewController: UIViewController {
 
     // MARK: - State
 
-    private let categoryCount = EmojiCategory.allCases.count
-    private let customSegmentIndex: Int
-
     private let segmentedControl = UISegmentedControl()
     private let hintLabel = UILabel()
     private var collectionView: UICollectionView!
@@ -36,19 +34,16 @@ final class EmojiPickerViewController: UIViewController {
     private let cellSpacing: CGFloat = 8
     private let sectionInset = UIEdgeInsets(top: 12, left: 16, bottom: 28, right: 16)
 
-    /// 当前选中的分组（nil 表示「我的贴纸」）
-    private var currentCategory: EmojiCategory? {
-        let index = segmentedControl.selectedSegmentIndex
-        guard index >= 0, index < categoryCount else { return nil }
-        return EmojiCategory(rawValue: index)
+    /// 当前选中的页签
+    private var currentSection: PickerSection {
+        PickerSection(rawValue: max(0, segmentedControl.selectedSegmentIndex)) ?? .emoji
     }
 
-    private var isCustomMode: Bool { currentCategory == nil }
+    private var isCustomMode: Bool { currentSection == .custom }
 
     // MARK: - Init
 
     init() {
-        customSegmentIndex = EmojiCategory.allCases.count
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -97,19 +92,16 @@ final class EmojiPickerViewController: UIViewController {
         header.axis = .horizontal
         header.alignment = .center
 
-        // 分组页签：4 个表情分组 + 「我的贴纸」
-        var titles = EmojiCategory.allCases.map { $0.title }
-        titles.append("我的贴纸")
-        for (index, title) in titles.enumerated() {
-            segmentedControl.insertSegment(withTitle: title, at: index, animated: false)
+        // 分组页签：表情 / 女生 / 男生 / 我的贴纸
+        for (index, section) in PickerSection.allCases.enumerated() {
+            segmentedControl.insertSegment(withTitle: section.title, at: index, animated: false)
         }
         segmentedControl.selectedSegmentIndex = 0
         segmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
-        // 分组多，字号收小一点，保证 iPhone 竖屏能排下
         segmentedControl.setTitleTextAttributes(
-            [.font: Theme.font(11, weight: .medium)], for: .normal)
+            [.font: Theme.font(13, weight: .medium)], for: .normal)
         segmentedControl.setTitleTextAttributes(
-            [.font: Theme.font(11, weight: .semibold)], for: .selected)
+            [.font: Theme.font(13, weight: .semibold)], for: .selected)
 
         hintLabel.font = Theme.font(12)
         hintLabel.textColor = Theme.textSecondary
@@ -157,7 +149,7 @@ final class EmojiPickerViewController: UIViewController {
     @objc private func segmentChanged() {
         hintLabel.text = isCustomMode
             ? "这些是你上传的贴纸，保存在本机沙盒。长按可删除。上传时会先本地自动抠图。"
-            : defaultHint
+            : (currentSection == .emoji ? defaultHint : "Q版人物表情，自动贴表情时会按识别到的性别匹配。")
         collectionView.setContentOffset(.zero, animated: false)
         collectionView.reloadData()
     }
@@ -170,8 +162,7 @@ final class EmojiPickerViewController: UIViewController {
     // MARK: - 上传（走抠图流程）/ 删除
 
     private func addCustomSticker() {
-        let presenter = self
-        StickerUploadFlow.start(from: presenter) { [weak self] fileName in
+        StickerUploadFlow.start(from: self) { [weak self] fileName in
             guard let self = self else { return }
             self.reloadCustomStickers()
             self.onPick?(.customSticker(fileName: fileName))
@@ -204,14 +195,35 @@ final class EmojiPickerViewController: UIViewController {
     }
 }
 
+// MARK: - 面板页签
+
+private enum PickerSection: Int, CaseIterable {
+    case emoji = 0
+    case girl = 1
+    case boy = 2
+    case custom = 3
+
+    var title: String {
+        switch self {
+        case .emoji: return "表情"
+        case .girl: return "女生"
+        case .boy: return "男生"
+        case .custom: return "我的贴纸"
+        }
+    }
+}
+
 // MARK: - UICollectionViewDataSource
 
 extension EmojiPickerViewController: UICollectionViewDataSource {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if isCustomMode { return customItemCount }
-        guard let category = currentCategory else { return 0 }
-        return EmojiCatalog.emojis(in: category).count
+        switch currentSection {
+        case .emoji: return StickerCatalog.emojis.count
+        case .girl: return StickerCatalog.girlStickers.count
+        case .boy: return StickerCatalog.boyStickers.count
+        case .custom: return customItemCount
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView,
@@ -219,14 +231,21 @@ extension EmojiPickerViewController: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: EmojiCell.reuseIdentifier,
                                                       for: indexPath) as! EmojiCell
 
-        if isCustomMode {
+        switch currentSection {
+        case .emoji:
+            cell.configure(emoji: StickerCatalog.emojis[indexPath.item])
+        case .girl:
+            cell.configure(image: StickerCatalog.avatarImage(named: StickerCatalog.girlStickers[indexPath.item],
+                                                             gender: .girl))
+        case .boy:
+            cell.configure(image: StickerCatalog.avatarImage(named: StickerCatalog.boyStickers[indexPath.item],
+                                                             gender: .boy))
+        case .custom:
             if indexPath.item == 0 {
                 cell.configureUpload()
             } else {
                 cell.configure(image: store.image(named: customStickers[indexPath.item - 1]))
             }
-        } else if let category = currentCategory {
-            cell.configure(emoji: EmojiCatalog.emojis(in: category)[indexPath.item])
         }
         return cell
     }
@@ -249,19 +268,29 @@ extension EmojiPickerViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: false)
 
-        if isCustomMode {
+        switch currentSection {
+        case .emoji:
+            onPick?(.emoji(StickerCatalog.emojis[indexPath.item]))
+            dismiss(animated: true)
+
+        case .girl:
+            let name = StickerCatalog.girlStickers[indexPath.item]
+            onPick?(.avatar(fileName: name, gender: .girl))
+            dismiss(animated: true)
+
+        case .boy:
+            let name = StickerCatalog.boyStickers[indexPath.item]
+            onPick?(.avatar(fileName: name, gender: .boy))
+            dismiss(animated: true)
+
+        case .custom:
             if indexPath.item == 0 {
                 addCustomSticker()
             } else {
                 onPick?(.customSticker(fileName: customStickers[indexPath.item - 1]))
                 dismiss(animated: true)
             }
-            return
         }
-
-        guard let category = currentCategory else { return }
-        onPick?(.emoji(EmojiCatalog.emojis(in: category)[indexPath.item]))
-        dismiss(animated: true)
     }
 }
 

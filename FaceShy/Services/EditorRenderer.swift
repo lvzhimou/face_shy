@@ -85,6 +85,11 @@ enum EditorRenderer {
         case .emoji(let value):
             drawEmoji(value, in: rect)
 
+        case .avatar(let fileName, let gender):
+            if let sticker = StickerCatalog.avatarImage(named: fileName, gender: gender) {
+                sticker.draw(in: aspectFitRect(content: sticker.size, in: rect))
+            }
+
         case .customSticker(let fileName):
             if let sticker = CustomStickerStore.shared.image(named: fileName) {
                 sticker.draw(in: aspectFitRect(content: sticker.size, in: rect))

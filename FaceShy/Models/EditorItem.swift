@@ -21,10 +21,18 @@ enum ItemRole {
     case free
 }
 
+/// 内置 Q版人物表情的性别（用于自动贴表情时和识别到的人脸匹配）
+enum AvatarGender: String {
+    case girl
+    case boy
+}
+
 /// 元素内容
 enum ItemContent {
     /// 系统 emoji
     case emoji(String)
+    /// 内置 Q版人物表情（bundle 内 StickerPacks/Girls | Boys 目录的 png 文件名）
+    case avatar(fileName: String, gender: AvatarGender)
     /// 用户上传的自定义贴纸（沙盒文件名，可能为带透明通道的抠图 PNG）
     case customSticker(fileName: String)
 }
@@ -67,6 +75,7 @@ final class EditorItem {
     var displayName: String {
         switch content {
         case .emoji: return "表情贴纸"
+        case .avatar(_, let gender): return gender == .girl ? "女生表情" : "男生表情"
         case .customSticker: return "自定义贴纸"
         }
     }
@@ -74,7 +83,7 @@ final class EditorItem {
     /// 是否是可以替换表情的类型（当前所有元素都是）
     var isSticker: Bool {
         switch content {
-        case .emoji, .customSticker: return true
+        case .emoji, .avatar, .customSticker: return true
         }
     }
 }

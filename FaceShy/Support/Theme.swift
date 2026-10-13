@@ -67,10 +67,12 @@ enum Theme {
     // MARK: 全局外观
 
     static func applyGlobalAppearance() {
+        // 透明导航栏：让页面顶部与背景融为一体（参考稿的沉浸式观感），
+        // 标题与按钮颜色仍由 textPrimary 控制
         let navBar = UINavigationBarAppearance()
-        navBar.configureWithOpaqueBackground()
-        navBar.backgroundColor = Theme.surface
-        navBar.shadowColor = Theme.separator
+        navBar.configureWithTransparentBackground()
+        navBar.backgroundColor = .clear
+        navBar.shadowColor = .clear
         navBar.titleTextAttributes = [.foregroundColor: Theme.textPrimary]
         navBar.largeTitleTextAttributes = [.foregroundColor: Theme.textPrimary]
 

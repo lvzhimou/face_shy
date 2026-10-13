@@ -18,7 +18,6 @@ final class EditorToolbarView: UIView {
 
     var onAction: ((Action) -> Void)?
 
-    private let scrollView = UIScrollView()
     private let stackView = UIStackView()
 
     override init(frame: CGRect) {
@@ -38,29 +37,19 @@ final class EditorToolbarView: UIView {
         layer.shadowOffset = CGSize(width: 0, height: -3)
         layer.shadowRadius = 10
 
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.alwaysBounceHorizontal = true
-        scrollView.contentInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-
+        // 四个功能在底部「居中 + 平均对齐」：去掉横向滚动，
+        // 用 fillEqually 让每个按钮等宽铺满整行
         stackView.axis = .horizontal
         stackView.alignment = .center
-        stackView.spacing = 2
-        stackView.distribution = .fill
+        stackView.distribution = .fillEqually
 
-        addSubviews(scrollView)
-        scrollView.addSubviews(stackView)
+        addSubviews(stackView)
 
         NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-            stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
-            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            stackView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor)
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
+            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 2),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2)
         ])
 
         addTool(symbol: "shuffle", title: "随机表情", action: .randomEmoji)
@@ -75,7 +64,7 @@ final class EditorToolbarView: UIView {
         configuration.imagePlacement = .top
         configuration.imagePadding = 5
         configuration.baseForegroundColor = Theme.textPrimary
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 4)
 
         var titleAttributes = AttributeContainer()
         titleAttributes.font = Theme.font(11, weight: .medium)
