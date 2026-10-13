@@ -508,7 +508,7 @@ private final class HeroBannerView: UIView {
 
 /// 首页双入口按钮：实心品牌渐变 + 阴影 + 按压回弹，
 /// 自带渐变层而不是「按钮里再塞一个装饰视图」，从根上杜绝点击被吞的问题。
-final class EntryCardButton: UIControl {
+final class EntryCardButton: UIButton {
 
     private let gradient = CAGradientLayer()
 
